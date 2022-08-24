@@ -12,6 +12,12 @@ void error_callback(int error, const char *description)
     std::cerr << "Error (" << error << "): " << description << std::endl;
 }
 
+void key_callback(GLFWwindow *window, int key, int, int action, int)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GL_TRUE);
+}
+
 int main()
 {
     if (!glfwInit())
@@ -36,6 +42,8 @@ int main()
     }
 
     glfwMakeContextCurrent(window);
+
+    glfwSetKeyCallback(window, key_callback);
 
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
     {
