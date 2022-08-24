@@ -4,6 +4,9 @@
 
 #include <iostream>
 
+#define WIDTH 640
+#define HEIGHT 480
+
 void error_callback(int error, const char *description)
 {
     std::cerr << "Error (" << error << "): " << description << std::endl;
@@ -24,7 +27,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    GLFWwindow *window = glfwCreateWindow(640, 480, "Combat GL", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Combat GL", nullptr, nullptr);
     if (window == nullptr)
     {
         std::cerr << "glfwCreateWindow failed" << std::endl;
@@ -40,11 +43,17 @@ int main()
         return 1;
     }
 
+    glViewport(0, 0, WIDTH, HEIGHT);
     glfwSwapInterval(1);
 
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
+
+        glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glfwSwapBuffers(window);
     }
 
     glfwDestroyWindow(window);
