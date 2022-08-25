@@ -2,10 +2,21 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/vec2.hpp>
+
 #include <iostream>
 
 #define WIDTH 640
 #define HEIGHT 480
+
+static const glm::vec2 vertices[] = {
+    {-0.90, -0.90},
+    {0.85, -0.90},
+    {-0.90, 0.85},
+    {0.90, -0.85},
+    {0.90, 0.90},
+    {-0.85, 0.90},
+};
 
 void error_callback(int error, const char *description)
 {
@@ -108,17 +119,34 @@ int main()
     }
 
     const auto program = prepare_shader();
-    (void)program;
+    glUseProgram(program);
 
-    glViewport(0, 0, WIDTH, HEIGHT);
+    GLuint buf_triangles = 0;
+    glGenBuffers(1, &buf_triangles);
+    glBindBuffer(GL_ARRAY_BUFFER, buf_triangles);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    GLuint vao_triangles = 0;
+    glGenVertexArrays(1, &vao_triangles);
+    glBindVertexArray(vao_triangles);
+    glBindBuffer(GL_ARRAY_BUFFER, buf_triangles);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    glViewport(0, 0, width, height);
     glfwSwapInterval(1);
 
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
-        glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glBindVertexArray(vao_triangles);
+        glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / sizeof(vertices[0]));
 
         glfwSwapBuffers(window);
     }
