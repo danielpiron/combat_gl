@@ -5,9 +5,63 @@
 #include <glm/vec2.hpp>
 
 #include <iostream>
+#include <string>
 
 #define WIDTH 640
 #define HEIGHT 480
+
+class Shader
+{
+public:
+    Shader()
+        : vertex_shader_id(glCreateShader(GL_VERTEX_SHADER)), fragment_shader_id(glCreateShader(GL_FRAGMENT_SHADER))
+    {
+    }
+    ~Shader()
+    {
+        if (vertex_shader_id != 0)
+        {
+            glDeleteShader(vertex_shader_id);
+        }
+        if (fragment_shader_id != 0)
+        {
+            glDeleteShader(fragment_shader_id);
+        }
+    }
+
+    void set_vertex_shader_text(const std::string &text)
+    {
+        vertex_shader_text = text;
+    }
+    void set_fragment_shader_text(const std::string &text)
+    {
+        fragment_shader_text = text;
+    }
+
+    bool compile_and_link()
+    {
+    }
+
+private:
+    bool compile_shader(const GLunit shader_id, const std::string &text)
+    {
+        glShaderSource(shader_id, 1, &text.c_str(), NULL);
+        glCompileShader(shader_id);
+
+        GLint compile_status = 0;
+        glGetShader(shader_id, GL_COMPILER_STATUS, compile_status);
+
+        return compile_status == GL_TRUE;
+    }
+
+private:
+    GLuint vertex_shader_id;
+    GLuint fragment_shader_id;
+    GLuint program_id = 0;
+
+    std::string vertex_shader_text;
+    std::string fragment_shader_text;
+};
 
 static const glm::vec2 vertices[] = {
     {-0.90, -0.90},
@@ -118,7 +172,39 @@ int main()
         return 1;
     }
 
+    const char *vertex_shader_text = R"(
+        #version 410 core
+
+        layout( location = 0 ) in vec4 vPosition;
+
+        void
+        main()
+        {
+            gl_Position = vPosition;
+        }
+    )";
+
+    const char *fragment_shader_text = R"(
+        #version 410 core
+
+        out vec4 fColor;
+
+        void main()
+        {
+            fColor = vec4(0.5, 0.4, 0.8, 1.0);
+        }
+    )";
+
+    Shader shader;
+
+    shader.set_vertex_shader_text(vertex_shader_text);
+    shader.set_fragment_shader_text(fragment_shader_text);
+    shader.compile();
+
+    shader.activate();
+
     const auto program = prepare_shader();
+
     glUseProgram(program);
 
     GLuint buf_triangles = 0;
