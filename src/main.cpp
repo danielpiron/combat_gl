@@ -1,13 +1,6 @@
-#define GLFW_INCLUDE_NONE
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "App.h"
 
 #include <glm/vec2.hpp>
-
-#include <iostream>
-
-#define WIDTH 640
-#define HEIGHT 480
 
 static const glm::vec2 vertices[] = {
     {-0.90, -0.90},
@@ -17,17 +10,6 @@ static const glm::vec2 vertices[] = {
     {0.90, 0.90},
     {-0.85, 0.90},
 };
-
-void error_callback(int error, const char *description)
-{
-    std::cerr << "Error (" << error << "): " << description << std::endl;
-}
-
-void key_callback(GLFWwindow *window, int key, int, int action, int)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GL_TRUE);
-}
 
 GLuint prepare_shader()
 {
@@ -85,73 +67,42 @@ GLuint prepare_shader()
     return program;
 }
 
-int main()
+class Triangles : public App
 {
-    if (!glfwInit())
+public:
+    void init() override
     {
-        std::cerr << "glfwInit failed" << std::endl;
-        return 1;
+        const auto program = prepare_shader();
+        glUseProgram(program);
+
+        glGenBuffers(1, &buf_triangles);
+        glBindBuffer(GL_ARRAY_BUFFER, buf_triangles);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        glGenVertexArrays(1, &vao_triangles);
+        glBindVertexArray(vao_triangles);
+        glBindBuffer(GL_ARRAY_BUFFER, buf_triangles);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(0);
     }
 
-    glfwSetErrorCallback(error_callback);
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Combat GL", nullptr, nullptr);
-    if (window == nullptr)
+    void display() override
     {
-        std::cerr << "glfwCreateWindow failed" << std::endl;
-        glfwTerminate();
-        return 1;
-    }
-
-    glfwMakeContextCurrent(window);
-
-    glfwSetKeyCallback(window, key_callback);
-
-    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
-    {
-        std::cout << "Failed to initialize OpenGL context" << std::endl;
-        return 1;
-    }
-
-    const auto program = prepare_shader();
-    glUseProgram(program);
-
-    GLuint buf_triangles = 0;
-    glGenBuffers(1, &buf_triangles);
-    glBindBuffer(GL_ARRAY_BUFFER, buf_triangles);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    GLuint vao_triangles = 0;
-    glGenVertexArrays(1, &vao_triangles);
-    glBindVertexArray(vao_triangles);
-    glBindBuffer(GL_ARRAY_BUFFER, buf_triangles);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(0);
-
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    glViewport(0, 0, width, height);
-    glfwSwapInterval(1);
-
-    while (!glfwWindowShouldClose(window))
-    {
-        glfwPollEvents();
-
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glBindVertexArray(vao_triangles);
         glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / sizeof(vertices[0]));
-
-        glfwSwapBuffers(window);
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+private:
+    GLuint buf_triangles = 0;
+    GLuint vao_triangles = 0;
+};
+
+int main()
+{
+    Triangles app;
+    app.run();
     return 0;
 }
