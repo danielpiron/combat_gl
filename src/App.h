@@ -5,9 +5,75 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <memory>
 
 #define WIDTH 640
 #define HEIGHT 480
+
+class ShaderStage
+{
+public:
+    enum class Type
+    {
+        fragment,
+        vertex
+    };
+
+    static GLenum glShaderEnum(const Type type)
+    {
+        switch (type)
+        {
+        case Type::fragment:
+            return GL_FRAGMENT_SHADER;
+        case Type::vertex:
+            return GL_VERTEX_SHADER;
+        }
+    }
+
+public:
+    ShaderStage() = delete;
+    ShaderStage(const std::string &text, const Type type)
+        : id(glCreateShader(glShaderEnum(type)))
+    {
+        const char *source = text.c_str();
+        glShaderSource(id, 1, &source, NULL);
+    }
+
+    ~ShaderStage()
+    {
+        glDeleteShader(id);
+    }
+
+    bool compile() const
+    {
+        glCompileShader(id);
+
+        GLint compile_status;
+        glGetShaderiv(id, GL_COMPILE_STATUS, &compile_status);
+        return compile_status == GL_TRUE;
+    }
+
+    std::string error_log() const
+    {
+        GLchar buffer[1024];
+        glGetShaderInfoLog(id, 1024, NULL, buffer);
+        return std::string(buffer);
+    }
+
+    GLuint glId() const
+    {
+        return id;
+    }
+
+private:
+    GLuint id;
+};
+
+class Shader
+{
+public:
+    using Stage = ShaderStage;
+};
 
 class App
 {
