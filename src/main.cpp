@@ -52,8 +52,11 @@ public:
         glGenVertexArrays(1, &vao_triangles);
         glBindVertexArray(vao_triangles);
         glBindBuffer(GL_ARRAY_BUFFER, buf_triangles);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(0);
+
+        auto loc = shader->attributes()["vPosition"].location;
+
+        glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(loc);
     }
 
     void display() override

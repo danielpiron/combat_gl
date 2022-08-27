@@ -1,7 +1,18 @@
 #include <gtest/gtest.h>
 #include <App.h>
 
+#include <ostream>
 #include <string>
+
+std::ostream &operator<<(std::ostream &os, const Shader::Attribute &attrib)
+{
+    os << '{'
+       << "Location: " << attrib.location << ", "
+       << "Type: " << attrib.type << ", "
+       << "Size: " << attrib.size
+       << '}';
+    return os;
+}
 
 TEST(App, CanRunWindowLess)
 {
@@ -67,7 +78,6 @@ TEST(App, CanReportShaderStageCompileErrors)
     with_errors.run_windowless();
     with_no_errors.run_windowless();
 
-    std::cout << with_no_errors.errorLog << std::endl;
     ASSERT_TRUE(with_no_errors.compileStatus);
     ASSERT_FALSE(with_errors.compileStatus);
     EXPECT_EQ("ERROR: 0:4: Incompatible types (vec4 and vec3) in assignment (and no available implicit conversion)\n", with_errors.errorLog);
@@ -164,6 +174,82 @@ TEST(App, CanReportShaderCompileErrors)
 
     EXPECT_TRUE(with_no_errors.compileStatus);
     EXPECT_EQ("", with_no_errors.errorLog);
+}
+
+TEST(App, CanAcquireShaderAttributes)
+{
+    class ShaderAttributesTest : public App
+    {
+    public:
+        ShaderAttributesTest(const char *vs_source, const char *fs_source) : vs_source(vs_source), fs_source(fs_source) {}
+        void init() override
+        {
+            Shader shader;
+
+            shader.add_vertex_stage(vs_source);
+            shader.add_fragment_stage(fs_source);
+
+            compileStatus = shader.compile_and_link();
+
+            if (!compileStatus)
+            {
+                errorLog = shader.error_log();
+            }
+            else
+            {
+                attributes = shader.attributes();
+            }
+        }
+        void display() override
+        {
+            close();
+        }
+
+    private:
+        std::string vs_source;
+        std::string fs_source;
+
+    public:
+        bool compileStatus = false;
+        std::string errorLog;
+        Shader::Attributes attributes;
+    };
+
+    const char *vs_source =
+        R"(#version 330 core
+           in vec4 vPosition;
+           in vec3 vNormal;
+           in mat4 mModel;
+           in float zRandom[4];
+
+           out vec3 normal;
+
+           void main() {
+            gl_Position = vPosition * mModel;
+            normal = vNormal * zRandom[2];
+           })";
+
+    const char *fs_source = R"(
+        #version 330 core
+        in vec3 normal;
+        out vec4 fColor;
+        void main() {
+            fColor = vec4(0.5, 0.4, 0.8, 1.0);
+        }
+    )";
+
+    Shader::Attributes expected = {
+        {"zRandom", {0, GL_FLOAT, 4}},
+        {"mModel", {4, GL_FLOAT_MAT4, 1}},
+        {"vNormal", {8, GL_FLOAT_VEC3, 1}},
+        {"vPosition", {9, GL_FLOAT_VEC4, 1}},
+    };
+
+    ShaderAttributesTest collect_attributes(vs_source, fs_source);
+    collect_attributes.run_windowless();
+
+    ASSERT_TRUE(collect_attributes.compileStatus);
+    EXPECT_EQ(expected, collect_attributes.attributes);
 }
 
 int main(int argc, char **argv)

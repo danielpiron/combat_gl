@@ -5,7 +5,9 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <map>
 #include <memory>
+#include <vector>
 
 #define WIDTH 640
 #define HEIGHT 480
@@ -97,10 +99,25 @@ private:
 class Shader
 {
 public:
+    struct Attribute
+    {
+        GLint location;
+        GLenum type;
+        GLsizei size;
+
+        bool operator==(const Attribute &rhs) const
+        {
+            return location == rhs.location && type == rhs.type && size == rhs.size;
+        }
+    };
+
     using Stage = ShaderStage;
+    using Attributes = std::map<std::string, Attribute>;
 
 public:
-    Shader() : id(glCreateProgram()) {}
+    Shader() : id(glCreateProgram())
+    {
+    }
     ~Shader()
     {
         glDeleteProgram(id);
@@ -150,9 +167,38 @@ public:
         return std::string("LINKING ") + std::string(buffer);
     }
 
+    Attributes attributes() const
+    {
+        Attributes result;
+
+        std::vector<GLchar> buffer(gl_parameter(GL_ACTIVE_ATTRIBUTE_MAX_LENGTH));
+        GLint attribute_count = gl_parameter(GL_ACTIVE_ATTRIBUTES);
+        for (decltype(attribute_count) i = 0; i < attribute_count; ++i)
+        {
+            GLsizei nameLength = 0;
+            GLint attribSize = 0;
+            GLenum attribType = 0;
+            glGetActiveAttrib(id, i, buffer.size(), &nameLength, &attribSize, &attribType, &buffer[0]);
+
+            std::string name(buffer.begin(), buffer.begin() + nameLength);
+            GLint attribLocation = glGetAttribLocation(id, name.c_str());
+
+            result.emplace(name, Attribute{attribLocation, attribType, attribSize});
+        }
+        return result;
+    }
+
     GLuint glId() const
     {
         return id;
+    }
+
+private:
+    GLint gl_parameter(GLenum property_name) const
+    {
+        GLint result;
+        glGetProgramiv(id, property_name, &result);
+        return result;
     }
 
 private:
