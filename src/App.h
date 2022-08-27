@@ -10,6 +10,24 @@
 #define WIDTH 640
 #define HEIGHT 480
 
+#ifdef GLAD_DEBUG
+void pre_gl_call(const char *name, void *, int len_args, ...)
+{
+    printf("Calling: %s (%d arguments)\n", name, len_args);
+}
+
+void post_gl_call(const char *name, void *, int, ...)
+{
+    GLenum error_code;
+    error_code = glad_glGetError();
+
+    if (error_code != GL_NO_ERROR)
+    {
+        fprintf(stderr, "ERROR %d in %s\n", error_code, name);
+    }
+}
+#endif
+
 class ShaderStage
 {
 public:
@@ -31,17 +49,24 @@ public:
     }
 
 public:
-    ShaderStage() = delete;
+    ShaderStage() = default;
     ShaderStage(const std::string &text, const Type type)
         : id(glCreateShader(glShaderEnum(type)))
     {
         const char *source = text.c_str();
         glShaderSource(id, 1, &source, NULL);
     }
-
     ~ShaderStage()
     {
-        glDeleteShader(id);
+        if (id != 0)
+            glDeleteShader(id);
+    }
+
+    ShaderStage &operator=(ShaderStage &&rhs)
+    {
+        id = rhs.id;
+        rhs.id = 0;
+        return *this;
     }
 
     bool compile() const
@@ -66,13 +91,75 @@ public:
     }
 
 private:
-    GLuint id;
+    GLuint id = 0;
 };
 
 class Shader
 {
 public:
     using Stage = ShaderStage;
+
+public:
+    Shader() : id(glCreateProgram()) {}
+    ~Shader()
+    {
+        glDeleteProgram(id);
+    }
+
+    void add_vertex_stage(const std::string &source)
+    {
+        vertex_stage = Stage(source, Stage::Type::vertex);
+        glAttachShader(id, vertex_stage.glId());
+    }
+
+    void add_fragment_stage(const std::string &source)
+    {
+        fragment_stage = Stage(source, Stage::Type::fragment);
+        glAttachShader(id, fragment_stage.glId());
+    }
+
+    bool compile_and_link()
+    {
+        if (!vertex_stage.compile())
+        {
+            stage_error_log = std::string("VERTEX SHADER ") + vertex_stage.error_log();
+            return false;
+        }
+        if (!fragment_stage.compile())
+        {
+            stage_error_log = std::string("FRAGMENT SHADER ") + fragment_stage.error_log();
+            return false;
+        }
+
+        glLinkProgram(id);
+
+        GLint link_status;
+        glGetProgramiv(id, GL_LINK_STATUS, &link_status);
+
+        return link_status == GL_TRUE;
+    }
+
+    std::string error_log() const
+    {
+        if (!stage_error_log.empty())
+        {
+            return stage_error_log;
+        }
+        GLchar buffer[1024];
+        glGetProgramInfoLog(id, 1024, NULL, buffer);
+        return std::string("LINKING ") + std::string(buffer);
+    }
+
+    GLuint glId() const
+    {
+        return id;
+    }
+
+private:
+    const GLuint id;
+    Stage vertex_stage;
+    Stage fragment_stage;
+    std::string stage_error_log;
 };
 
 class App
@@ -147,6 +234,13 @@ private:
             std::cout << "Failed to initialize OpenGL context" << std::endl;
             return;
         }
+
+        /*
+        #ifdef GLAD_DEBUG
+                glad_set_pre_callback(pre_gl_call);
+                glad_set_post_callback(post_gl_call);
+        #endif
+        */
         init();
 
         glfwSwapInterval(1);
