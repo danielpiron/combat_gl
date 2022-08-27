@@ -26,7 +26,25 @@ private:
 public:
     virtual void init() = 0;
     virtual void display() = 0;
+
     void run()
+    {
+        _run(false);
+    }
+
+    void run_windowless()
+    {
+        _run(true);
+    }
+
+protected:
+    void close()
+    {
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+
+private:
+    void _run(bool windowless)
     {
         if (!glfwInit())
         {
@@ -41,7 +59,12 @@ public:
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-        GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Combat GL", nullptr, nullptr);
+        if (windowless)
+        {
+            glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+        }
+
+        window = glfwCreateWindow(WIDTH, HEIGHT, "Combat GL", nullptr, nullptr);
         if (window == nullptr)
         {
             std::cerr << "glfwCreateWindow failed" << std::endl;
@@ -78,4 +101,7 @@ public:
         glfwDestroyWindow(window);
         glfwTerminate();
     }
+
+private:
+    GLFWwindow *window;
 };
