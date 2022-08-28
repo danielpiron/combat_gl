@@ -14,6 +14,17 @@ std::ostream &operator<<(std::ostream &os, const Shader::Attribute &attrib)
     return os;
 }
 
+std::ostream &
+operator<<(std::ostream &os, const Shader::Uniform &uniform)
+{
+    os << '{'
+       << "Location: " << uniform.location << ", "
+       << "Type: " << uniform.type << ", "
+       << "Size: " << uniform.size
+       << '}';
+    return os;
+}
+
 TEST(App, CanRunWindowLess)
 {
 
@@ -250,6 +261,88 @@ TEST(App, CanAcquireShaderAttributes)
 
     ASSERT_TRUE(collect_attributes.compileStatus);
     EXPECT_EQ(expected, collect_attributes.attributes);
+}
+
+TEST(App, CanAcquireShaderUniforms)
+{
+    class ShaderUniformsTest : public App
+    {
+    public:
+        ShaderUniformsTest(const char *vs_source, const char *fs_source) : vs_source(vs_source), fs_source(fs_source) {}
+        void init() override
+        {
+            Shader shader;
+
+            shader.add_vertex_stage(vs_source);
+            shader.add_fragment_stage(fs_source);
+
+            compileStatus = shader.compile_and_link();
+
+            if (!compileStatus)
+            {
+                errorLog = shader.error_log();
+            }
+            else
+            {
+                uniforms = shader.uniforms();
+            }
+        }
+        void display() override
+        {
+            close();
+        }
+
+    private:
+        std::string vs_source;
+        std::string fs_source;
+
+    public:
+        bool compileStatus = false;
+        std::string errorLog;
+        Shader::Uniforms uniforms;
+    };
+
+    const char *vs_source =
+        R"(#version 330 core
+           in vec4 vPosition;
+           in vec3 vNormal;
+
+           uniform mat4 ModelViewProjection;
+           uniform mat4 ModelView;
+
+           out vec3 normal;
+
+           void main() {
+            gl_Position = vPosition * ModelViewProjection;
+            normal = (vec4(vNormal, 0) * ModelView).xyz;
+           })";
+
+    const char *fs_source = R"(
+        #version 330 core
+
+        uniform vec3 LightDirection;
+        in vec3 normal;
+        out vec4 fColor;
+
+        void main() {
+            float factor = dot(normal, LightDirection);
+            fColor = vec4(0.5, 0.4, 0.8, 1.0) * factor;
+        }
+    )";
+
+    Shader::Uniforms expected = {
+        {"ModelViewProjection", {0, GL_FLOAT_MAT4, 1}},
+        {"ModelView", {4, GL_FLOAT_MAT4, 1}},
+        {"LightDirection", {8, GL_FLOAT_VEC3, 1}},
+    };
+
+    ShaderUniformsTest collect_uniforms(vs_source, fs_source);
+    collect_uniforms.run_windowless();
+
+    EXPECT_TRUE(collect_uniforms.compileStatus);
+    ASSERT_EQ("", collect_uniforms.errorLog);
+
+    EXPECT_EQ(expected, collect_uniforms.uniforms);
 }
 
 int main(int argc, char **argv)

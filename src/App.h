@@ -111,8 +111,21 @@ public:
         }
     };
 
+    struct Uniform
+    {
+        GLint location;
+        GLenum type;
+        GLsizei size;
+
+        bool operator==(const Uniform &rhs) const
+        {
+            return location == rhs.location && type == rhs.type && size == rhs.size;
+        }
+    };
+
     using Stage = ShaderStage;
     using Attributes = std::map<std::string, Attribute>;
+    using Uniforms = std::map<std::string, Uniform>;
 
 public:
     Shader() : id(glCreateProgram())
@@ -184,6 +197,27 @@ public:
             GLint attribLocation = glGetAttribLocation(id, name.c_str());
 
             result.emplace(name, Attribute{attribLocation, attribType, attribSize});
+        }
+        return result;
+    }
+
+    Uniforms uniforms() const
+    {
+        Uniforms result;
+
+        std::vector<GLchar> buffer(gl_parameter(GL_ACTIVE_UNIFORM_MAX_LENGTH));
+        GLint uniform_count = gl_parameter(GL_ACTIVE_UNIFORMS);
+        for (decltype(uniform_count) i = 0; i < uniform_count; ++i)
+        {
+            GLsizei nameLength = 0;
+            GLint uniformSize = 0;
+            GLenum uniformType = 0;
+            glGetActiveUniform(id, i, buffer.size(), &nameLength, &uniformSize, &uniformType, &buffer[0]);
+
+            std::string name(buffer.begin(), buffer.begin() + nameLength);
+            GLint uniformLocation = glGetUniformLocation(id, name.c_str());
+
+            result.emplace(name, Uniform{uniformLocation, uniformType, uniformSize});
         }
         return result;
     }
