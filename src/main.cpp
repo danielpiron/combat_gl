@@ -1,6 +1,7 @@
 #include "App.h"
 
 #include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 #include <memory>
 
 static const glm::vec2 vertices[] = {
@@ -12,6 +13,15 @@ static const glm::vec2 vertices[] = {
     {-0.85, 0.90},
 };
 
+static const glm::vec4 colors[] = {
+    {1.0, 0.0, 0.0, 1.0},
+    {1.0, 1.0, 0.0, 1.0},
+    {1.0, 0.0, 1.0, 1.0},
+    {1.0, 0.0, 0.0, 1.0},
+    {0.0, 1.0, 0.0, 1.0},
+    {0.0, 0.0, 1.0, 1.0},
+};
+
 class Triangles : public App
 {
 public:
@@ -20,15 +30,20 @@ public:
         const char *vertex_shader_text = R"(
            #version 330 core
            in vec4 vPosition;
+           in vec4 vColor;
+
+           out vec4 color;
            void main() {
             gl_Position = vPosition;
+            color = vColor;
            })";
 
         const char *fragment_shader_text = R"(
         #version 330 core
+        in vec4 color;
         out vec4 fColor;
         void main() {
-            fColor = vec4(0.5, 0.4, 0.8, 1.0);
+            fColor = color;
         }
     )";
 
@@ -49,14 +64,23 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, buf_triangles);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+        glGenBuffers(1, &buf_colors);
+        glBindBuffer(GL_ARRAY_BUFFER, buf_colors);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+
         glGenVertexArrays(1, &vao_triangles);
         glBindVertexArray(vao_triangles);
+
+        auto pos = shader->attributes()["vPosition"].location;
+        auto col = shader->attributes()["vColor"].location;
+
         glBindBuffer(GL_ARRAY_BUFFER, buf_triangles);
+        glVertexAttribPointer(pos, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(pos);
 
-        auto loc = shader->attributes()["vPosition"].location;
-
-        glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(loc);
+        glBindBuffer(GL_ARRAY_BUFFER, buf_colors);
+        glVertexAttribPointer(col, 4, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(col);
     }
 
     void display() override
@@ -70,6 +94,7 @@ public:
 
 private:
     GLuint buf_triangles = 0;
+    GLuint buf_colors = 0;
     GLuint vao_triangles = 0;
     std::shared_ptr<Shader> shader;
 };

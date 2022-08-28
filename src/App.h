@@ -13,6 +13,36 @@
 #define HEIGHT 480
 
 #ifdef GLAD_DEBUG
+const char *glErrorName(GLenum error)
+{
+    switch (error)
+    {
+    case GL_INVALID_ENUM:
+        return "GL_INVALID_ENUM";
+    case GL_INVALID_VALUE:
+        return "GL_INVALID_VALUE";
+    case GL_INVALID_OPERATION:
+        return "GL_INVALID_OPERATION";
+    case GL_STACK_OVERFLOW:
+        return "GL_STACK_OVERFLOW";
+
+    case GL_STACK_UNDERFLOW:
+        return "GL_STACK_UNDERFLOW";
+    case GL_OUT_OF_MEMORY:
+        return "GL_OUT_OF_MEMORY";
+    case GL_INVALID_FRAMEBUFFER_OPERATION:
+        return "GL_INVALID_FRAMEBUFFER_OPERATION";
+    case GL_CONTEXT_LOST:
+        return "GL_CONTEXT_LOST";
+        /*
+    case GL_TABLE_TOO_LARGE:
+        return "GL_TABLE_TOO_LARGE";
+        */
+    default:
+        return "UNKNOWN OPENGL ERROR";
+    }
+}
+
 void pre_gl_call(const char *name, void *, int len_args, ...)
 {
     printf("Calling: %s (%d arguments)\n", name, len_args);
@@ -25,7 +55,7 @@ void post_gl_call(const char *name, void *, int, ...)
 
     if (error_code != GL_NO_ERROR)
     {
-        fprintf(stderr, "ERROR %d in %s\n", error_code, name);
+        fprintf(stderr, "ERROR %s in %s\n", glErrorName(error_code), name);
     }
 }
 #endif
@@ -315,12 +345,10 @@ private:
             return;
         }
 
-        /*
-        #ifdef GLAD_DEBUG
-                glad_set_pre_callback(pre_gl_call);
-                glad_set_post_callback(post_gl_call);
-        #endif
-        */
+#ifdef GLAD_DEBUG
+        // glad_set_pre_callback(pre_gl_call);
+        glad_set_post_callback(post_gl_call);
+#endif
         init();
 
         glfwSwapInterval(1);
