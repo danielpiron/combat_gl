@@ -15,6 +15,12 @@ set(CMAKE_CXX_EXTENSIONS False)
 #enable_testing()
 add_subdirectory(tests)
 
+
+set(GLFW_BUILD_EXAMPLES OFF)
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_BUILD_DOCS OFF)
+set(GLFW_INSTALL OFF)
+
 add_subdirectory(deps/glfw)
 add_subdirectory(deps/glad)
 add_subdirectory(deps/glm)
