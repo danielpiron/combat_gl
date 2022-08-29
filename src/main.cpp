@@ -66,7 +66,10 @@ public:
 
         glGenBuffers(1, &buf_colors);
         glBindBuffer(GL_ARRAY_BUFFER, buf_colors);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(colors), NULL, GL_STATIC_DRAW);
+
+        glm::vec4 *ptr = reinterpret_cast<glm::vec4 *>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+        memcpy(ptr, colors, sizeof(colors));
 
         glGenVertexArrays(1, &vao_triangles);
         glBindVertexArray(vao_triangles);
