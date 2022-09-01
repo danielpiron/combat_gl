@@ -60,6 +60,34 @@ void post_gl_call(const char *name, void *, int, ...)
 }
 #endif
 
+template <typename T>
+class Buffer
+{
+public:
+    Buffer(std::initializer_list<T> init)
+    {
+        std::vector<T> v(init);
+        glGenBuffers(1, &id);
+        // Save previous buffer before binding a new one
+        GLint currentBuffer;
+        glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &currentBuffer);
+
+        glBindBuffer(GL_ARRAY_BUFFER, id);
+        glBufferData(GL_ARRAY_BUFFER, v.size() * sizeof(v[0]), &v[0], GL_STATIC_DRAW);
+    }
+
+    ~Buffer()
+    {
+        if (id != 0)
+        {
+            glDeleteBuffers(1, &id);
+        }
+    }
+
+private:
+    GLuint id = 0;
+};
+
 class ShaderStage
 {
 public:

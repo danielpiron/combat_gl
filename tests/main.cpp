@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 #include <App.h>
 
+#include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
+
 #include <ostream>
 #include <string>
 
@@ -343,6 +346,32 @@ TEST(App, CanAcquireShaderUniforms)
     ASSERT_EQ("", collect_uniforms.errorLog);
 
     EXPECT_EQ(expected, collect_uniforms.uniforms);
+}
+
+struct Vertex
+{
+    glm::vec3 position;
+    glm::vec3 normal;
+};
+
+TEST(AppBuffer, CanInitializeWithInitializationList)
+{
+    class BufferInit : public App
+    {
+        void init() override
+        {
+            // One flat shaded triangle
+            Buffer<Vertex> buffer({
+                {{-1.0, -1.0, 0}, {0, 0, 1.0}},
+                {{1.0, -1.0, 0}, {0, 0, 1.0}},
+                {{-1.0, 1.0, 0}, {0, 0, 1.0}},
+            });
+        }
+        void display() override
+        {
+            close();
+        }
+    };
 }
 
 int main(int argc, char **argv)
