@@ -10,6 +10,13 @@ struct Vertex
     glm::vec2 position;
 };
 
+#define VERTEX_PROPERTY(I, T, M) glVertexAttribPointer(I,                                                 \
+                                                       sizeof(T::M) / sizeof(decltype(T::M)::value_type), \
+                                                       GL_FLOAT,                                          \
+                                                       GL_FALSE,                                          \
+                                                       sizeof(T),                                         \
+                                                       reinterpret_cast<void *>(offsetof(T, M)))
+
 class Triangles : public App
 {
 public:
@@ -64,20 +71,11 @@ public:
         auto col = shader->attributes()["vColor"].location;
 
         glBindBuffer(GL_ARRAY_BUFFER, buffer->glId());
-        glVertexAttribPointer(pos,
-                              2,
-                              GL_FLOAT,
-                              GL_FALSE,
-                              sizeof(Vertex),
-                              reinterpret_cast<void *>(offsetof(Vertex, position)));
-        glEnableVertexAttribArray(pos);
 
-        glVertexAttribPointer(col,
-                              4,
-                              GL_FLOAT,
-                              GL_FALSE,
-                              sizeof(Vertex),
-                              reinterpret_cast<void *>(offsetof(Vertex, color)));
+        VERTEX_PROPERTY(col, Vertex, color);
+        VERTEX_PROPERTY(pos, Vertex, position);
+
+        glEnableVertexAttribArray(pos);
         glEnableVertexAttribArray(col);
     }
 
