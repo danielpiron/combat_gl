@@ -354,6 +354,11 @@ struct Vertex
     glm::vec3 normal;
 };
 
+bool operator==(const Vertex &lhs, const Vertex &rhs)
+{
+    return lhs.position == rhs.position && lhs.normal == rhs.normal;
+}
+
 TEST(AppBuffer, CanInitializeWithInitializationList)
 {
     class BufferInit : public App
@@ -366,12 +371,43 @@ TEST(AppBuffer, CanInitializeWithInitializationList)
                 {{1.0, -1.0, 0}, {0, 0, 1.0}},
                 {{-1.0, 1.0, 0}, {0, 0, 1.0}},
             });
+
+            glGetIntegerv(GL_ARRAY_BUFFER_BINDING, reinterpret_cast<GLint *>(&previousBuffer));
+            glBindBuffer(GL_ARRAY_BUFFER, buffer.glId());
+            auto ptr = reinterpret_cast<Vertex *>(glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY));
+
+            contents.reserve(buffer.size());
+            for (size_t i = 0; i < buffer.size(); ++i)
+            {
+                contents.push_back(*ptr++);
+            }
+            glUnmapBuffer(GL_ARRAY_BUFFER);
+
+            glBindBuffer(GL_ARRAY_BUFFER, previousBuffer);
         }
+
         void display() override
         {
             close();
         }
+
+    public:
+        std::vector<Vertex> contents;
+        GLuint previousBuffer;
     };
+
+    BufferInit buffer_init;
+    buffer_init.run_windowless();
+
+    EXPECT_EQ(0, buffer_init.previousBuffer);
+
+    std::vector<Vertex> expected{
+        {{-1.0, -1.0, 0}, {0, 0, 1.0}},
+        {{1.0, -1.0, 0}, {0, 0, 1.0}},
+        {{-1.0, 1.0, 0}, {0, 0, 1.0}},
+    };
+
+    EXPECT_EQ(expected, buffer_init.contents);
 }
 
 int main(int argc, char **argv)

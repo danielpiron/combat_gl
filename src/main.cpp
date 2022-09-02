@@ -10,15 +10,6 @@ struct Vertex
     glm::vec2 position;
 };
 
-static const Vertex vertices[] = {
-    {{1.0, 0.0, 0.0, 1.0}, {-0.90, -0.90}},
-    {{1.0, 1.0, 0.0, 1.0}, {0.85, -0.90}},
-    {{1.0, 0.0, 1.0, 1.0}, {-0.90, 0.85}},
-    {{1.0, 0.0, 0.0, 1.0}, {0.90, -0.85}},
-    {{0.0, 1.0, 0.0, 1.0}, {0.90, 0.90}},
-    {{0.0, 0.0, 1.0, 1.0}, {-0.85, 0.90}},
-};
-
 class Triangles : public App
 {
 public:
@@ -55,11 +46,16 @@ public:
             return;
         }
 
-        glUseProgram(shader->glId());
+        buffer = std::make_shared<Buffer<Vertex>>(std::initializer_list<Vertex>{
+            {{1.0, 0.0, 0.0, 1.0}, {-0.90, -0.90}},
+            {{1.0, 1.0, 0.0, 1.0}, {0.85, -0.90}},
+            {{1.0, 0.0, 1.0, 1.0}, {-0.90, 0.85}},
+            {{1.0, 0.0, 0.0, 1.0}, {0.90, -0.85}},
+            {{0.0, 1.0, 0.0, 1.0}, {0.90, 0.90}},
+            {{0.0, 0.0, 1.0, 1.0}, {-0.85, 0.90}},
+        });
 
-        glGenBuffers(1, &buf_triangles);
-        glBindBuffer(GL_ARRAY_BUFFER, buf_triangles);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glUseProgram(shader->glId());
 
         glGenVertexArrays(1, &vao_triangles);
         glBindVertexArray(vao_triangles);
@@ -67,9 +63,9 @@ public:
         auto pos = shader->attributes()["vPosition"].location;
         auto col = shader->attributes()["vColor"].location;
 
-        glBindBuffer(GL_ARRAY_BUFFER, buf_triangles);
+        glBindBuffer(GL_ARRAY_BUFFER, buffer->glId());
         glVertexAttribPointer(pos,
-                              sizeof(decltype(Vertex::position)) / sizeof(typename decltype(vertices[0].position)::value_type),
+                              2,
                               GL_FLOAT,
                               GL_FALSE,
                               sizeof(Vertex),
@@ -77,7 +73,7 @@ public:
         glEnableVertexAttribArray(pos);
 
         glVertexAttribPointer(col,
-                              sizeof(vertices[0].color) / sizeof(typename decltype(vertices[0].color)::value_type),
+                              4,
                               GL_FLOAT,
                               GL_FALSE,
                               sizeof(Vertex),
@@ -91,14 +87,13 @@ public:
         glClear(GL_COLOR_BUFFER_BIT);
 
         glBindVertexArray(vao_triangles);
-        glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / sizeof(vertices[0]));
+        glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
 private:
-    GLuint buf_triangles = 0;
-    // GLuint buf_colors = 0;
     GLuint vao_triangles = 0;
     std::shared_ptr<Shader> shader;
+    std::shared_ptr<Buffer<Vertex>> buffer;
 };
 
 int main()

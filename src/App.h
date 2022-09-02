@@ -60,20 +60,31 @@ void post_gl_call(const char *name, void *, int, ...)
 }
 #endif
 
-template <typename T>
-class Buffer
+class GLResource
 {
 public:
-    Buffer(std::initializer_list<T> init)
+    explicit GLResource(const GLuint resourceId) : id(resourceId) {}
+    GLuint glId() const { return id; }
+
+protected:
+    GLuint id;
+};
+
+template <typename T>
+class Buffer : public GLResource
+{
+public:
+    Buffer(std::initializer_list<T> init) : GLResource(genBuffer()), _size(init.size())
     {
-        std::vector<T> v(init);
-        glGenBuffers(1, &id);
+        std::vector<T> vec(init);
         // Save previous buffer before binding a new one
         GLint currentBuffer;
         glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &currentBuffer);
 
         glBindBuffer(GL_ARRAY_BUFFER, id);
-        glBufferData(GL_ARRAY_BUFFER, v.size() * sizeof(v[0]), &v[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vec.size() * sizeof(vec[0]), &vec[0], GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, currentBuffer);
     }
 
     ~Buffer()
@@ -84,8 +95,21 @@ public:
         }
     }
 
+    size_t size() const
+    {
+        return _size;
+    }
+
 private:
-    GLuint id = 0;
+    static GLuint genBuffer()
+    {
+        GLuint new_id;
+        glGenBuffers(1, &new_id);
+        return new_id;
+    }
+
+private:
+    size_t _size;
 };
 
 class ShaderStage
