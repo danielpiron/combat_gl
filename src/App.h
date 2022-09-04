@@ -97,6 +97,18 @@ protected:
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
 
+    auto getFramebufferSize() const
+    {
+        struct ScreenDimensions
+        {
+            int width;
+            int height;
+        };
+        ScreenDimensions sd;
+        glfwGetFramebufferSize(window, &sd.width, &sd.height);
+        return sd;
+    }
+
 private:
     void _run(bool windowless)
     {
@@ -141,12 +153,6 @@ private:
         glad_set_post_callback(post_gl_call);
 #endif
         init();
-
-        glfwSwapInterval(1);
-
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-        glViewport(0, 0, width, height);
 
         while (!glfwWindowShouldClose(window))
         {

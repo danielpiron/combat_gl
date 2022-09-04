@@ -77,6 +77,11 @@ public:
 
         glEnableVertexAttribArray(pos);
         glEnableVertexAttribArray(col);
+
+        glfwSwapInterval(1);
+
+        const auto [width, height] = getFramebufferSize();
+        glViewport(0, 0, width, height);
     }
 
     void display() override
