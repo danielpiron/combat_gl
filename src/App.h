@@ -10,6 +10,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 #define WIDTH 640
@@ -63,7 +64,7 @@ void post_gl_call(const char *name, void *, int, ...)
 }
 #endif
 
-class App
+class Renderer
 {
 private:
     static void error_callback(int error, const char *description)
@@ -77,6 +78,96 @@ private:
             glfwSetWindowShouldClose(window, GL_TRUE);
     }
 
+public:
+    Renderer()
+    {
+        if (!glfwInit())
+        {
+            throw std::runtime_error("glfwInit failed");
+        }
+
+        glfwSetErrorCallback(error_callback);
+
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+        glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+
+        window = glfwCreateWindow(WIDTH, HEIGHT, "Combat GL", nullptr, nullptr);
+        if (window == nullptr)
+        {
+            throw std::runtime_error("glfwCreateWindow failed");
+        }
+
+        glfwMakeContextCurrent(window);
+
+        glfwSetKeyCallback(window, key_callback);
+
+        if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
+        {
+            throw std::runtime_error("Failed to initialize OpenGL context");
+        }
+
+#ifdef GLAD_DEBUG
+        // glad_set_pre_callback(pre_gl_call);
+        glad_set_post_callback(post_gl_call);
+#endif
+    }
+
+    ~Renderer()
+    {
+        if (window != nullptr)
+        {
+            glfwDestroyWindow(window);
+        }
+        glfwTerminate();
+    }
+
+    void show_window()
+    {
+        glfwShowWindow(window);
+    }
+
+    auto framebuffer_size() const
+    {
+        struct ScreenDimensions
+        {
+            int width;
+            int height;
+        };
+        ScreenDimensions sd;
+        glfwGetFramebufferSize(window, &sd.width, &sd.height);
+        return sd;
+    }
+
+    bool should_close() const
+    {
+        return glfwWindowShouldClose(window);
+    }
+
+    void poll_events() const
+    {
+        glfwPollEvents();
+    }
+
+    void swap_buffers() const
+    {
+        glfwSwapBuffers(window);
+    }
+
+    void close() const
+    {
+
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+
+private:
+    GLFWwindow *window = nullptr;
+};
+
+class App
+{
 public:
     virtual void init() = 0;
     virtual void display() = 0;
@@ -94,79 +185,28 @@ public:
 protected:
     void close()
     {
-        glfwSetWindowShouldClose(window, GL_TRUE);
-    }
-
-    auto getFramebufferSize() const
-    {
-        struct ScreenDimensions
-        {
-            int width;
-            int height;
-        };
-        ScreenDimensions sd;
-        glfwGetFramebufferSize(window, &sd.width, &sd.height);
-        return sd;
+        renderer.close();
     }
 
 private:
     void _run(bool windowless)
     {
-        if (!glfwInit())
+        if (!windowless)
         {
-            std::cerr << "glfwInit failed" << std::endl;
-            return;
+            renderer.show_window();
         }
-
-        glfwSetErrorCallback(error_callback);
-
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-        if (windowless)
-        {
-            glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
-        }
-
-        window = glfwCreateWindow(WIDTH, HEIGHT, "Combat GL", nullptr, nullptr);
-        if (window == nullptr)
-        {
-            std::cerr << "glfwCreateWindow failed" << std::endl;
-            glfwTerminate();
-            return;
-        }
-
-        glfwMakeContextCurrent(window);
-
-        glfwSetKeyCallback(window, key_callback);
-
-        if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
-        {
-            std::cout << "Failed to initialize OpenGL context" << std::endl;
-            return;
-        }
-
-#ifdef GLAD_DEBUG
-        // glad_set_pre_callback(pre_gl_call);
-        glad_set_post_callback(post_gl_call);
-#endif
         init();
 
-        while (!glfwWindowShouldClose(window))
+        while (!renderer.should_close())
         {
-            glfwPollEvents();
+            renderer.poll_events();
 
             display();
 
-            glfwSwapBuffers(window);
+            renderer.swap_buffers();
         }
-
-        glfwDestroyWindow(window);
-        glfwTerminate();
     }
 
-private:
-    GLFWwindow *window;
+protected:
+    Renderer renderer;
 };

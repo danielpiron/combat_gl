@@ -80,7 +80,7 @@ public:
 
         glfwSwapInterval(1);
 
-        const auto [width, height] = getFramebufferSize();
+        const auto [width, height] = renderer.framebuffer_size();
         glViewport(0, 0, width, height);
     }
 
