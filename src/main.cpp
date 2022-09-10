@@ -86,8 +86,7 @@ public:
 
     void display() override
     {
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        renderer.clear({0.1f, 0.1f, 0.1f, 1.0f});
 
         glBindVertexArray(vao_triangles);
         glDrawArrays(GL_TRIANGLES, 0, 6);
