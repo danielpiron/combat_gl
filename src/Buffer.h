@@ -11,14 +11,19 @@ class Buffer : public GLResource
 public:
     Buffer(std::initializer_list<T> init) : GLResource(genBuffer()), _size(init.size())
     {
-        std::vector<T> vec(init);
         // Save previous buffer before binding a new one
         GLint currentBuffer;
         glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &currentBuffer);
 
         glBindBuffer(GL_ARRAY_BUFFER, id);
-        glBufferData(GL_ARRAY_BUFFER, vec.size() * sizeof(vec[0]), &vec[0], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, init.size() * sizeof(T), nullptr, GL_STATIC_DRAW);
 
+        T *ptr = reinterpret_cast<T *>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+        for (const auto &element : init)
+        {
+            *ptr++ = element;
+        }
+        glUnmapBuffer(GL_ARRAY_BUFFER);
         glBindBuffer(GL_ARRAY_BUFFER, currentBuffer);
     }
 

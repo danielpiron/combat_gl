@@ -11,8 +11,8 @@
 
 struct Vertex
 {
-    glm::vec4 color;
     glm::vec3 position;
+    glm::vec3 normal;
 };
 
 #define VERTEX_PROPERTY(I, T, M) glVertexAttribPointer(I,                                                 \
@@ -30,14 +30,14 @@ public:
         const char *vertex_shader_text = R"(
            #version 330 core
            in vec3 vPosition;
-           in vec4 vColor;
+           in vec3 vNormal;
 
            uniform mat4 mMVP;
 
            out vec4 color;
            void main() {
             gl_Position = vec4(vPosition, 1) * mMVP;
-            color = vColor;
+            color = vec4(vNormal, 1);
            })";
 
         const char *fragment_shader_text = R"(
@@ -61,12 +61,42 @@ public:
         }
 
         buffer = std::make_shared<Buffer<Vertex>>(std::initializer_list<Vertex>{
-            {{1.0, 0.0, 0.0, 1.0}, {-1.0, -1.0, 0}},
-            {{1.0, 1.0, 0.0, 1.0}, {1.0, -1.0, 0}},
-            {{1.0, 0.0, 1.0, 1.0}, {-1.0, 1.0, 0}},
-            {{1.0, 0.0, 0.0, 1.0}, {1.0, -1.0, 0}},
-            {{0.0, 1.0, 0.0, 1.0}, {1.0, 1.0, 0}},
-            {{0.0, 0.0, 1.0, 1.0}, {-1.0, 1.0, 0}},
+            {{1.0, 1.0, 1.0}, {0.0, -0.0, 1.0}},
+            {{-1.0, -1.0, 1.0}, {0.0, -0.0, 1.0}},
+            {{1.0, -1.0, 1.0}, {0.0, -0.0, 1.0}},
+            {{1.0, -1.0, -1.0}, {0.0, -1.0, 0.0}},
+            {{-1.0, -1.0, 1.0}, {0.0, -1.0, 0.0}},
+            {{-1.0, -1.0, -1.0}, {0.0, -1.0, 0.0}},
+            {{-1.0, -1.0, -1.0}, {-1.0, -0.0, 0.0}},
+            {{-1.0, 1.0, 1.0}, {-1.0, -0.0, 0.0}},
+            {{-1.0, 1.0, -1.0}, {-1.0, -0.0, 0.0}},
+            {{-1.0, 1.0, -1.0}, {0.0, 0.0, -1.0}},
+            {{1.0, -1.0, -1.0}, {0.0, 0.0, -1.0}},
+            {{-1.0, -1.0, -1.0}, {0.0, 0.0, -1.0}},
+            {{1.0, 1.0, -1.0}, {1.0, -0.0, 0.0}},
+            {{1.0, -1.0, 1.0}, {1.0, -0.0, 0.0}},
+            {{1.0, -1.0, -1.0}, {1.0, -0.0, 0.0}},
+            {{-1.0, 1.0, -1.0}, {0.0, 1.0, -0.0}},
+            {{1.0, 1.0, 1.0}, {0.0, 1.0, -0.0}},
+            {{1.0, 1.0, -1.0}, {0.0, 1.0, -0.0}},
+            {{1.0, 1.0, 1.0}, {0.0, 0.0, 1.0}},
+            {{-1.0, 1.0, 1.0}, {0.0, 0.0, 1.0}},
+            {{-1.0, -1.0, 1.0}, {0.0, 0.0, 1.0}},
+            {{1.0, -1.0, -1.0}, {0.0, -1.0, 0.0}},
+            {{1.0, -1.0, 1.0}, {0.0, -1.0, 0.0}},
+            {{-1.0, -1.0, 1.0}, {0.0, -1.0, 0.0}},
+            {{-1.0, -1.0, -1.0}, {-1.0, -0.0, -0.0}},
+            {{-1.0, -1.0, 1.0}, {-1.0, -0.0, -0.0}},
+            {{-1.0, 1.0, 1.0}, {-1.0, -0.0, -0.0}},
+            {{-1.0, 1.0, -1.0}, {0.0, 0.0, -1.0}},
+            {{1.0, 1.0, -1.0}, {0.0, 0.0, -1.0}},
+            {{1.0, -1.0, -1.0}, {0.0, 0.0, -1.0}},
+            {{1.0, 1.0, -1.0}, {1.0, -0.0, 0.0}},
+            {{1.0, 1.0, 1.0}, {1.0, -0.0, 0.0}},
+            {{1.0, -1.0, 1.0}, {1.0, -0.0, 0.0}},
+            {{-1.0, 1.0, -1.0}, {0.0, 1.0, 0.0}},
+            {{-1.0, 1.0, 1.0}, {0.0, 1.0, 0.0}},
+            {{1.0, 1.0, 1.0}, {0.0, 1.0, 0.0}},
         });
 
         glUseProgram(shader->glId());
@@ -75,20 +105,26 @@ public:
         glBindVertexArray(vao_triangles);
 
         const auto pos = shader->attributes()["vPosition"].location;
-        const auto col = shader->attributes()["vColor"].location;
+        const auto norm = shader->attributes()["vNormal"].location;
 
         glBindBuffer(GL_ARRAY_BUFFER, buffer->glId());
 
-        VERTEX_PROPERTY(col, Vertex, color);
+        std::cout << "Vertex Size: " << sizeof(Vertex) << std::endl;
+        std::cout << "Vertex Position: " << sizeof(decltype(Vertex::position)) << std::endl;
+        std::cout << "Vertex Normal: " << sizeof(decltype(Vertex::normal)) << std::endl;
+        std::cout << "Offset of Position: " << offsetof(Vertex, position) << std::endl;
+        std::cout << "Offset of Normal: " << offsetof(Vertex, normal) << std::endl;
         VERTEX_PROPERTY(pos, Vertex, position);
+        VERTEX_PROPERTY(norm, Vertex, normal);
 
         glEnableVertexAttribArray(pos);
-        glEnableVertexAttribArray(col);
+        glEnableVertexAttribArray(norm);
 
         glfwSwapInterval(1);
 
         const auto [width, height] = renderer.framebuffer_size();
         glViewport(0, 0, width, height);
+        glEnable(GL_DEPTH_TEST);
     }
 
     void display() override
@@ -110,7 +146,7 @@ public:
         glUniformMatrix4fv(mvp, 1, GL_FALSE, glm::value_ptr(MVP));
 
         glBindVertexArray(vao_triangles);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawArrays(GL_TRIANGLES, 0, 9);
 
         theta += 0.01f;
     }
