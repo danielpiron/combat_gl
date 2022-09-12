@@ -1,13 +1,18 @@
 #include "App.h"
 
-#include <glm/vec2.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
+
 #include <memory>
 
 struct Vertex
 {
     glm::vec4 color;
-    glm::vec2 position;
+    glm::vec3 position;
 };
 
 #define VERTEX_PROPERTY(I, T, M) glVertexAttribPointer(I,                                                 \
@@ -24,12 +29,14 @@ public:
     {
         const char *vertex_shader_text = R"(
            #version 330 core
-           in vec4 vPosition;
+           in vec3 vPosition;
            in vec4 vColor;
+
+           uniform mat4 mMVP;
 
            out vec4 color;
            void main() {
-            gl_Position = vPosition;
+            gl_Position = vec4(vPosition, 1) * mMVP;
             color = vColor;
            })";
 
@@ -54,12 +61,12 @@ public:
         }
 
         buffer = std::make_shared<Buffer<Vertex>>(std::initializer_list<Vertex>{
-            {{1.0, 0.0, 0.0, 1.0}, {-0.90, -0.90}},
-            {{1.0, 1.0, 0.0, 1.0}, {0.85, -0.90}},
-            {{1.0, 0.0, 1.0, 1.0}, {-0.90, 0.85}},
-            {{1.0, 0.0, 0.0, 1.0}, {0.90, -0.85}},
-            {{0.0, 1.0, 0.0, 1.0}, {0.90, 0.90}},
-            {{0.0, 0.0, 1.0, 1.0}, {-0.85, 0.90}},
+            {{1.0, 0.0, 0.0, 1.0}, {-1.0, -1.0, 0}},
+            {{1.0, 1.0, 0.0, 1.0}, {1.0, -1.0, 0}},
+            {{1.0, 0.0, 1.0, 1.0}, {-1.0, 1.0, 0}},
+            {{1.0, 0.0, 0.0, 1.0}, {1.0, -1.0, 0}},
+            {{0.0, 1.0, 0.0, 1.0}, {1.0, 1.0, 0}},
+            {{0.0, 0.0, 1.0, 1.0}, {-1.0, 1.0, 0}},
         });
 
         glUseProgram(shader->glId());
@@ -67,8 +74,8 @@ public:
         glGenVertexArrays(1, &vao_triangles);
         glBindVertexArray(vao_triangles);
 
-        auto pos = shader->attributes()["vPosition"].location;
-        auto col = shader->attributes()["vColor"].location;
+        const auto pos = shader->attributes()["vPosition"].location;
+        const auto col = shader->attributes()["vColor"].location;
 
         glBindBuffer(GL_ARRAY_BUFFER, buffer->glId());
 
@@ -88,14 +95,31 @@ public:
     {
         renderer.clear({0.1f, 0.1f, 0.1f, 1.0f});
 
+        const auto [width, height] = renderer.framebuffer_size();
+
+        glm::mat4 model(1.0f);
+        model = glm::rotate(model, theta, glm::vec3(0, 1.0f, 0));
+
+        glm::mat4 view(1.0f);
+        view = glm::translate(view, glm::vec3(0, 0, -10.0f));
+        glm::mat4 projection = glm::perspectiveFov(glm::radians(60.f), static_cast<float>(width), static_cast<float>(height), 0.1f, 100.0f);
+
+        glm::mat4 MVP = projection * view * model;
+
+        const auto mvp = shader->uniforms()["mMVP"].location;
+        glUniformMatrix4fv(mvp, 1, GL_FALSE, glm::value_ptr(MVP));
+
         glBindVertexArray(vao_triangles);
         glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        theta += 0.01f;
     }
 
 private:
     GLuint vao_triangles = 0;
     std::shared_ptr<Shader> shader;
     std::shared_ptr<Buffer<Vertex>> buffer;
+    float theta = 0;
 };
 
 int main()
