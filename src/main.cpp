@@ -36,8 +36,8 @@ public:
 
            out vec4 color;
            void main() {
-            gl_Position = vec4(vPosition, 1) * mMVP;
-            color = vec4(vNormal, 1);
+            gl_Position = mMVP * vec4(vPosition, 1);
+            color = vec4(vNormal * 0.5 + vec3(0.5), 1);
            })";
 
         const char *fragment_shader_text = R"(
@@ -137,7 +137,8 @@ public:
         model = glm::rotate(model, theta, glm::vec3(0, 1.0f, 0));
 
         glm::mat4 view(1.0f);
-        view = glm::translate(view, glm::vec3(0, 0, -10.0f));
+        view = glm::rotate(view, glm::radians(15.f), glm::vec3(1.0, 0, 0));
+        view = glm::translate(view, glm::vec3(0, -2.0f, -8.0f));
         glm::mat4 projection = glm::perspectiveFov(glm::radians(60.f), static_cast<float>(width), static_cast<float>(height), 0.1f, 100.0f);
 
         glm::mat4 MVP = projection * view * model;
@@ -146,7 +147,7 @@ public:
         glUniformMatrix4fv(mvp, 1, GL_FALSE, glm::value_ptr(MVP));
 
         glBindVertexArray(vao_triangles);
-        glDrawArrays(GL_TRIANGLES, 0, 9);
+        glDrawArrays(GL_TRIANGLES, 0, buffer->size());
 
         theta += 0.01f;
     }
