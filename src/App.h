@@ -66,6 +66,12 @@ void post_gl_call(const char *name, void *, int, ...)
 }
 #endif
 
+class ScrollHandler
+{
+public:
+    virtual void onScroll(double xoffset, double yoffset) = 0;
+};
+
 class Renderer
 {
 private:
@@ -78,6 +84,16 @@ private:
     {
         if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
             glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+
+    static void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
+    {
+        auto userWindow = reinterpret_cast<Renderer *>(glfwGetWindowUserPointer(window));
+
+        if (userWindow->scroll_handler != nullptr)
+        {
+            userWindow->scroll_handler->onScroll(xoffset, yoffset);
+        }
     }
 
 public:
@@ -104,7 +120,9 @@ public:
 
         glfwMakeContextCurrent(window);
 
+        glfwSetWindowUserPointer(window, this);
         glfwSetKeyCallback(window, key_callback);
+        glfwSetScrollCallback(window, scroll_callback);
 
         if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
         {
@@ -124,6 +142,11 @@ public:
             glfwDestroyWindow(window);
         }
         glfwTerminate();
+    }
+
+    void set_scroll_handler(ScrollHandler *handler)
+    {
+        scroll_handler = handler;
     }
 
     void show_window()
@@ -169,6 +192,8 @@ public:
 
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
+
+    ScrollHandler *scroll_handler = nullptr;
 
 private:
     GLFWwindow *window = nullptr;

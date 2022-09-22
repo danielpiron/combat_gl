@@ -7,6 +7,7 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
+#include <algorithm>
 #include <memory>
 
 struct Vertex
@@ -22,11 +23,20 @@ struct Vertex
                                                        sizeof(T),                                         \
                                                        reinterpret_cast<void *>(offsetof(T, M)))
 
-class Triangles : public App
+class Triangles : public App, public ScrollHandler
 {
 public:
+    void onScroll(double, double yoffset) override
+    {
+        dist -= yoffset;
+        dist = std::max(dist, 0.1f);
+    }
+
     void init() override
     {
+
+        renderer.set_scroll_handler(this);
+
         const char *vertex_shader_text = R"(
            #version 330 core
            in vec3 vPosition;
@@ -138,7 +148,7 @@ public:
 
         glm::mat4 view(1.0f);
         view = glm::rotate(view, glm::radians(15.f), glm::vec3(1.0, 0, 0));
-        view = glm::translate(view, glm::vec3(0, -2.0f, -8.0f));
+        view = glm::translate(view, glm::vec3(0, -2.0f, -dist));
         glm::mat4 projection = glm::perspectiveFov(glm::radians(60.f), static_cast<float>(width), static_cast<float>(height), 0.1f, 100.0f);
 
         glm::mat4 MVP = projection * view * model;
@@ -157,6 +167,7 @@ private:
     std::shared_ptr<Shader> shader;
     std::shared_ptr<Buffer<Vertex>> buffer;
     float theta = 0;
+    float dist = 8.0f;
 };
 
 int main()
