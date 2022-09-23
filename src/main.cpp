@@ -55,17 +55,27 @@ public:
 
     void onMouseDown(MouseHandler::Button button) override
     {
-        std::cout << button << " button pressed" << std::endl;
+        if (button == MouseHandler::Button::middle)
+        {
+            move_camera = true;
+        }
     }
 
     void onMouseUp(MouseHandler::Button button) override
     {
-        std::cout << button << " button released" << std::endl;
+        if (button == MouseHandler::Button::middle)
+        {
+            move_camera = false;
+        }
     }
 
-    void onMouseMove(double xpos, double ypos) override
+    void onMouseMove(double xpos, double) override
     {
-        std::cout << "Mouse Moved X: " << xpos << ", Y: " << ypos << std::endl;
+        if (move_camera)
+        {
+            theta += (last_xpos - xpos) * 0.1;
+        }
+        last_xpos = xpos;
     }
 
     void init() override
@@ -181,11 +191,10 @@ public:
         const auto [width, height] = renderer.framebuffer_size();
 
         glm::mat4 model(1.0f);
-        model = glm::rotate(model, theta, glm::vec3(0, 1.0f, 0));
 
-        glm::mat4 view(1.0f);
-        view = glm::rotate(view, glm::radians(15.f), glm::vec3(1.0, 0, 0));
-        view = glm::translate(view, glm::vec3(0, -2.0f, -dist));
+        glm::mat4 view = glm::lookAt(glm::vec3(cosf(theta) * dist, 0, sinf(theta) * dist),
+                                     glm::vec3(0, 0, 0),
+                                     glm::vec3(0, 1, 0));
         glm::mat4 projection = glm::perspectiveFov(glm::radians(60.f), static_cast<float>(width), static_cast<float>(height), 0.1f, 100.0f);
 
         glm::mat4 MVP = projection * view * model;
@@ -195,8 +204,6 @@ public:
 
         glBindVertexArray(vao_triangles);
         glDrawArrays(GL_TRIANGLES, 0, buffer->size());
-
-        theta += 0.01f;
     }
 
 private:
@@ -205,6 +212,9 @@ private:
     std::shared_ptr<Buffer<Vertex>> buffer;
     float theta = 0;
     float dist = 8.0f;
+
+    double last_xpos = 0;
+    bool move_camera = false;
 };
 
 int main()
