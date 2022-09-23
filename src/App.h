@@ -84,6 +84,7 @@ public:
     };
     virtual void onMouseDown(Button) = 0;
     virtual void onMouseUp(Button) = 0;
+    virtual void onMouseMove(double, double) = 0;
 };
 
 class Renderer
@@ -145,6 +146,15 @@ private:
         }
     }
 
+    static void mouse_position_callback(GLFWwindow *window, double xpos, double ypos)
+    {
+        auto userWindow = reinterpret_cast<Renderer *>(glfwGetWindowUserPointer(window));
+        if (userWindow->mouse_handler != nullptr)
+        {
+            userWindow->mouse_handler->onMouseMove(xpos, ypos);
+        }
+    }
+
 public:
     Renderer()
     {
@@ -173,6 +183,7 @@ public:
         glfwSetKeyCallback(window, key_callback);
         glfwSetScrollCallback(window, scroll_callback);
         glfwSetMouseButtonCallback(window, mouse_button_callback);
+        glfwSetCursorPosCallback(window, mouse_position_callback);
 
         if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
         {

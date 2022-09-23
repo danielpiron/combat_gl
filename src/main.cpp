@@ -63,6 +63,11 @@ public:
         std::cout << button << " button released" << std::endl;
     }
 
+    void onMouseMove(double xpos, double ypos) override
+    {
+        std::cout << "Mouse Moved X: " << xpos << ", Y: " << ypos << std::endl;
+    }
+
     void init() override
     {
 
