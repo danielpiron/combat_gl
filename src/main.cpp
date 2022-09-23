@@ -1,7 +1,9 @@
 #include "App.h"
 
+#define GLM_SWIZZLE
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
@@ -69,13 +71,15 @@ public:
         }
     }
 
-    void onMouseMove(double xpos, double) override
+    void onMouseMove(double xpos, double ypos) override
     {
         if (move_camera)
         {
-            theta += (last_xpos - xpos) * 0.1;
+            theta -= (last_xpos - xpos) * 0.1;
+            pitch -= (last_ypos - ypos) * 0.1;
         }
         last_xpos = xpos;
+        last_ypos = ypos;
     }
 
     void init() override
@@ -192,7 +196,8 @@ public:
 
         glm::mat4 model(1.0f);
 
-        glm::mat4 view = glm::lookAt(glm::vec3(cosf(theta) * dist, 0, sinf(theta) * dist),
+        glm::vec4 cameraPos = glm::yawPitchRoll(theta, pitch, 0.0f) * glm::vec4(0, 0, -dist, 0);
+        glm::mat4 view = glm::lookAt(glm::vec3(cameraPos),
                                      glm::vec3(0, 0, 0),
                                      glm::vec3(0, 1, 0));
         glm::mat4 projection = glm::perspectiveFov(glm::radians(60.f), static_cast<float>(width), static_cast<float>(height), 0.1f, 100.0f);
@@ -210,10 +215,13 @@ private:
     GLuint vao_triangles = 0;
     std::shared_ptr<Shader> shader;
     std::shared_ptr<Buffer<Vertex>> buffer;
+
+    float pitch = 0;
     float theta = 0;
     float dist = 8.0f;
 
     double last_xpos = 0;
+    double last_ypos = 0;
     bool move_camera = false;
 };
 
