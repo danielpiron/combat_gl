@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <ostream>
 
 struct Vertex
 {
@@ -23,7 +24,27 @@ struct Vertex
                                                        sizeof(T),                                         \
                                                        reinterpret_cast<void *>(offsetof(T, M)))
 
-class Triangles : public App, public ScrollHandler
+std::ostream &operator<<(std::ostream &os, const MouseHandler::Button &b)
+{
+    switch (b)
+    {
+    case MouseHandler::Button::left:
+        os << "left";
+        break;
+    case MouseHandler::Button::right:
+        os << "right";
+        break;
+    case MouseHandler::Button::middle:
+        os << "middle";
+        break;
+    default:
+        os << "unknown mouse button";
+        break;
+    }
+    return os;
+}
+
+class Triangles : public App, public ScrollHandler, public MouseHandler
 {
 public:
     void onScroll(double, double yoffset) override
@@ -32,10 +53,21 @@ public:
         dist = std::max(dist, 0.1f);
     }
 
+    void onMouseDown(MouseHandler::Button button) override
+    {
+        std::cout << button << " button pressed" << std::endl;
+    }
+
+    void onMouseUp(MouseHandler::Button button) override
+    {
+        std::cout << button << " button released" << std::endl;
+    }
+
     void init() override
     {
 
         renderer.set_scroll_handler(this);
+        renderer.mouse_handler = this;
 
         const char *vertex_shader_text = R"(
            #version 330 core

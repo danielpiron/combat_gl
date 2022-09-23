@@ -72,6 +72,20 @@ public:
     virtual void onScroll(double xoffset, double yoffset) = 0;
 };
 
+class MouseHandler
+{
+public:
+    enum class Button
+    {
+        none,
+        left,
+        right,
+        middle
+    };
+    virtual void onMouseDown(Button) = 0;
+    virtual void onMouseUp(Button) = 0;
+};
+
 class Renderer
 {
 private:
@@ -93,6 +107,41 @@ private:
         if (userWindow->scroll_handler != nullptr)
         {
             userWindow->scroll_handler->onScroll(xoffset, yoffset);
+        }
+    }
+
+    static MouseHandler::Button translate_glfw_button(int button)
+    {
+        switch (button)
+        {
+        case GLFW_MOUSE_BUTTON_LEFT:
+            return MouseHandler::Button::left;
+        case GLFW_MOUSE_BUTTON_RIGHT:
+            return MouseHandler::Button::right;
+        case GLFW_MOUSE_BUTTON_MIDDLE:
+            return MouseHandler::Button::middle;
+        default:
+            return MouseHandler::Button::none;
+        }
+    }
+
+    static void mouse_button_callback(GLFWwindow *window, int button, int action, int)
+    {
+        auto userWindow = reinterpret_cast<Renderer *>(glfwGetWindowUserPointer(window));
+        if (userWindow->mouse_handler != nullptr)
+        {
+            MouseHandler::Button handlerButton = translate_glfw_button(button);
+            switch (action)
+            {
+            case GLFW_PRESS:
+                userWindow->mouse_handler->onMouseDown(handlerButton);
+                break;
+            case GLFW_RELEASE:
+                userWindow->mouse_handler->onMouseUp(handlerButton);
+                break;
+            default:
+                break;
+            }
         }
     }
 
@@ -123,6 +172,7 @@ public:
         glfwSetWindowUserPointer(window, this);
         glfwSetKeyCallback(window, key_callback);
         glfwSetScrollCallback(window, scroll_callback);
+        glfwSetMouseButtonCallback(window, mouse_button_callback);
 
         if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
         {
@@ -194,6 +244,7 @@ public:
     }
 
     ScrollHandler *scroll_handler = nullptr;
+    MouseHandler *mouse_handler = nullptr;
 
 private:
     GLFWwindow *window = nullptr;
