@@ -26,17 +26,17 @@ struct Vertex
                                                        sizeof(T),                                         \
                                                        reinterpret_cast<void *>(offsetof(T, M)))
 
-std::ostream &operator<<(std::ostream &os, const MouseHandler::Button &b)
+std::ostream &operator<<(std::ostream &os, const Window::MouseHandler::Button &b)
 {
     switch (b)
     {
-    case MouseHandler::Button::left:
+    case Window::MouseHandler::Button::left:
         os << "left";
         break;
-    case MouseHandler::Button::right:
+    case Window::MouseHandler::Button::right:
         os << "right";
         break;
-    case MouseHandler::Button::middle:
+    case Window::MouseHandler::Button::middle:
         os << "middle";
         break;
     default:
@@ -46,7 +46,7 @@ std::ostream &operator<<(std::ostream &os, const MouseHandler::Button &b)
     return os;
 }
 
-class Triangles : public App, public ScrollHandler, public MouseHandler
+class Triangles : public App, public Window::ScrollHandler, public Window::MouseHandler
 {
 public:
     void onScroll(double, double yoffset) override
@@ -85,8 +85,8 @@ public:
     void init() override
     {
 
-        renderer.set_scroll_handler(this);
-        renderer.mouse_handler = this;
+        window.setScrollHandler(this);
+        window.setMouseHandler(this);
 
         const char *vertex_shader_text = R"(
            #version 330 core
@@ -183,16 +183,16 @@ public:
 
         glfwSwapInterval(1);
 
-        const auto [width, height] = renderer.framebuffer_size();
+        const auto [width, height] = window.framebuffer_size();
         glViewport(0, 0, width, height);
         glEnable(GL_DEPTH_TEST);
     }
 
     void display() override
     {
-        renderer.clear({0.1f, 0.1f, 0.1f, 1.0f});
+        window.clear({0.1f, 0.1f, 0.1f, 1.0f});
 
-        const auto [width, height] = renderer.framebuffer_size();
+        const auto [width, height] = window.framebuffer_size();
 
         glm::mat4 model(1.0f);
 

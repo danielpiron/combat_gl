@@ -66,29 +66,30 @@ void post_gl_call(const char *name, void *, int, ...)
 }
 #endif
 
-class ScrollHandler
+class Window
 {
 public:
-    virtual void onScroll(double xoffset, double yoffset) = 0;
-};
-
-class MouseHandler
-{
-public:
-    enum class Button
+    class ScrollHandler
     {
-        none,
-        left,
-        right,
-        middle
+    public:
+        virtual void onScroll(double xoffset, double yoffset) = 0;
     };
-    virtual void onMouseDown(Button) = 0;
-    virtual void onMouseUp(Button) = 0;
-    virtual void onMouseMove(double, double) = 0;
-};
 
-class Renderer
-{
+    class MouseHandler
+    {
+    public:
+        enum class Button
+        {
+            none,
+            left,
+            right,
+            middle
+        };
+        virtual void onMouseDown(Button) = 0;
+        virtual void onMouseUp(Button) = 0;
+        virtual void onMouseMove(double, double) = 0;
+    };
+
 private:
     static void error_callback(int error, const char *description)
     {
@@ -103,15 +104,11 @@ private:
 
     static void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
     {
-        auto userWindow = reinterpret_cast<Renderer *>(glfwGetWindowUserPointer(window));
-
-        if (userWindow->scroll_handler != nullptr)
-        {
-            userWindow->scroll_handler->onScroll(xoffset, yoffset);
-        }
+        auto userWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
+        userWindow->dispatchScrollEvent(xoffset, yoffset);
     }
 
-    static MouseHandler::Button translate_glfw_button(int button)
+    static MouseHandler::Button translateGLFWButton(int button)
     {
         switch (button)
         {
@@ -128,35 +125,27 @@ private:
 
     static void mouse_button_callback(GLFWwindow *window, int button, int action, int)
     {
-        auto userWindow = reinterpret_cast<Renderer *>(glfwGetWindowUserPointer(window));
-        if (userWindow->mouse_handler != nullptr)
+        auto userWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
+        switch (action)
         {
-            MouseHandler::Button handlerButton = translate_glfw_button(button);
-            switch (action)
-            {
-            case GLFW_PRESS:
-                userWindow->mouse_handler->onMouseDown(handlerButton);
-                break;
-            case GLFW_RELEASE:
-                userWindow->mouse_handler->onMouseUp(handlerButton);
-                break;
-            default:
-                break;
-            }
+        case GLFW_PRESS:
+            userWindow->dispatchMouseDownEvent(translateGLFWButton(button));
+            break;
+        case GLFW_RELEASE:
+            userWindow->dispatchMouseUpEvent(translateGLFWButton(button));
+            break;
+        default:
+            break;
         }
     }
-
     static void mouse_position_callback(GLFWwindow *window, double xpos, double ypos)
     {
-        auto userWindow = reinterpret_cast<Renderer *>(glfwGetWindowUserPointer(window));
-        if (userWindow->mouse_handler != nullptr)
-        {
-            userWindow->mouse_handler->onMouseMove(xpos, ypos);
-        }
+        auto userWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
+        userWindow->dispatchMouseMoveEvent(xpos, ypos);
     }
 
 public:
-    Renderer()
+    Window()
     {
         if (!glfwInit())
         {
@@ -196,7 +185,7 @@ public:
 #endif
     }
 
-    ~Renderer()
+    ~Window()
     {
         if (window != nullptr)
         {
@@ -205,12 +194,17 @@ public:
         glfwTerminate();
     }
 
-    void set_scroll_handler(ScrollHandler *handler)
+    void setScrollHandler(ScrollHandler *handler)
     {
-        scroll_handler = handler;
+        scrollHandler = handler;
     }
 
-    void show_window()
+    void setMouseHandler(MouseHandler *handler)
+    {
+        mouseHandler = handler;
+    }
+
+    void show()
     {
         glfwShowWindow(window);
     }
@@ -227,7 +221,7 @@ public:
         return sd;
     }
 
-    bool should_close() const
+    bool shouldClose() const
     {
         return glfwWindowShouldClose(window);
     }
@@ -250,15 +244,43 @@ public:
 
     void close() const
     {
-
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
 
-    ScrollHandler *scroll_handler = nullptr;
-    MouseHandler *mouse_handler = nullptr;
+    // Event handler dispatch
+    void dispatchScrollEvent(double xoffset, double yoffset)
+    {
+        if (scrollHandler == nullptr)
+            return;
+        scrollHandler->onScroll(xoffset, yoffset);
+    }
+
+    void dispatchMouseDownEvent(MouseHandler::Button button)
+    {
+        if (mouseHandler == nullptr)
+            return;
+        mouseHandler->onMouseDown(button);
+    }
+
+    void dispatchMouseUpEvent(MouseHandler::Button button)
+    {
+        if (mouseHandler == nullptr)
+            return;
+        mouseHandler->onMouseUp(button);
+    }
+
+    void dispatchMouseMoveEvent(double xpos, double ypos)
+    {
+        if (mouseHandler == nullptr)
+            return;
+        mouseHandler->onMouseMove(xpos, ypos);
+    }
 
 private:
     GLFWwindow *window = nullptr;
+
+    ScrollHandler *scrollHandler = nullptr;
+    MouseHandler *mouseHandler = nullptr;
 };
 
 class App
@@ -280,7 +302,7 @@ public:
 protected:
     void close()
     {
-        renderer.close();
+        window.close();
     }
 
 private:
@@ -288,20 +310,20 @@ private:
     {
         if (!windowless)
         {
-            renderer.show_window();
+            window.show();
         }
         init();
 
-        while (!renderer.should_close())
+        while (!window.shouldClose())
         {
-            renderer.poll_events();
+            window.poll_events();
 
             display();
 
-            renderer.swap_buffers();
+            window.swap_buffers();
         }
     }
 
 protected:
-    Renderer renderer;
+    Window window;
 };
