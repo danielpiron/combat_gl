@@ -5,6 +5,74 @@
 #include <initializer_list>
 #include <vector>
 
+namespace applesauce
+{
+    class Buffer : public GLResource
+    {
+    public:
+        enum class Type
+        {
+            vertex,
+        };
+
+    private:
+        static GLuint genGlBuffer()
+        {
+            GLuint new_id;
+            glGenBuffers(1, &new_id);
+            return new_id;
+        }
+
+        static GLenum getGlTarget(Type type)
+        {
+            switch (type)
+            {
+            case Type::vertex:
+                return GL_ARRAY_BUFFER;
+            default:
+                return 0;
+            }
+        }
+
+    public:
+        Buffer(size_t size, Type type) : GLResource(genGlBuffer()), _target(getGlTarget(type)), _size(size)
+        {
+            bind();
+            glBufferData(_target, size, nullptr, GL_STATIC_DRAW);
+            unbind();
+        }
+
+        void bind()
+        {
+            glBindBuffer(_target, id);
+        }
+
+        void unbind()
+        {
+            glBindBuffer(_target, 0);
+        }
+
+        void *map()
+        {
+            return glMapBuffer(_target, GL_WRITE_ONLY);
+        }
+
+        bool unmap()
+        {
+            return glUnmapBuffer(_target);
+        }
+
+        size_t size()
+        {
+            return _size;
+        }
+
+    private:
+        const GLenum _target;
+        const size_t _size;
+    };
+}
+
 template <typename T>
 class Buffer : public GLResource
 {
