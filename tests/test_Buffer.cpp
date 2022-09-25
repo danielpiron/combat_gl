@@ -1,23 +1,13 @@
 #include <gtest/gtest.h>
 
-#include <applesauce/Window.h>
+#include "AppleSauceTest.h"
 #include <applesauce/Buffer.h>
 
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 
-class AppleSauceBuffer : public ::testing::Test
+class AppleSauceBuffer : public AppleSauceTest
 {
-public:
-    AppleSauceBuffer() : window(640, 480)
-    {
-    }
-    ~AppleSauceBuffer()
-    {
-    }
-
-protected:
-    Window window;
 };
 
 TEST_F(AppleSauceBuffer, CanBeMappedToVertexPointer)
