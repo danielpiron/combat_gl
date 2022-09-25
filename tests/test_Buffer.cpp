@@ -86,3 +86,41 @@ TEST_F(AppleSauceBuffer, CanLeaveBufferUnboundAfterConstructor)
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &postConstructId);
     EXPECT_EQ(postConstructId, 0);
 }
+
+TEST_F(AppleSauceBuffer, CanVerifyBuffersAreDistinct)
+{
+    float expected1 = 1234.5f;
+    float expected2 = 12.345f;
+
+    applesauce::Buffer buffer1(sizeof(float), applesauce::Buffer::Type::vertex);
+    applesauce::Buffer buffer2(sizeof(float), applesauce::Buffer::Type::vertex);
+
+    buffer1.bind();
+    auto ptr1 = reinterpret_cast<float *>(buffer1.map());
+
+    *ptr1 = expected1;
+
+    ASSERT_TRUE(buffer1.unmap());
+    buffer1.unbind();
+
+    buffer2.bind();
+    auto ptr2 = reinterpret_cast<float *>(buffer2.map());
+
+    *ptr2 = expected2;
+
+    ASSERT_TRUE(buffer2.unmap());
+    buffer2.unbind();
+
+    float result1;
+    buffer1.bind();
+    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float), &result1);
+    buffer1.unbind();
+
+    float result2;
+    buffer2.bind();
+    glGetBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float), &result2);
+    buffer2.unbind();
+
+    EXPECT_EQ(expected1, result1);
+    EXPECT_EQ(expected2, result2);
+}
