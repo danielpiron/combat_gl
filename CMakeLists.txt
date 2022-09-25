@@ -11,10 +11,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS False)
 
-#include(CTest)
-#enable_testing()
-add_subdirectory(tests)
+file(GLOB APPLESAUCE_FILES src/applesauce/*.cpp)
 
+add_subdirectory(tests)
 
 set(GLFW_BUILD_EXAMPLES OFF)
 set(GLFW_BUILD_TESTS OFF)
@@ -35,7 +34,8 @@ add_subdirectory(deps/glm)
 # set(PNG_TESTS OFF CACHE BOOL "Build libpng tests" FORCE)
 # add_subdirectory(deps/libpng)
 
-add_executable(combat_gl${PLAYER_SOURCE} src/main.cpp)
+
+add_executable(combat_gl src/main.cpp ${APPLESAUCE_FILES})
 target_link_libraries(combat_gl
  glfw
  glad

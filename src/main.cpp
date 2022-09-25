@@ -1,4 +1,4 @@
-#include "App.h"
+#include "applesauce/App.h"
 
 #define GLM_SWIZZLE
 #include <glm/gtc/matrix_transform.hpp>
@@ -146,7 +146,7 @@ public:
 
         glfwSwapInterval(1);
 
-        const auto [width, height] = window.framebuffer_size();
+        const auto [width, height] = window.framebufferSize();
         glViewport(0, 0, width, height);
         glEnable(GL_DEPTH_TEST);
     }
@@ -155,7 +155,7 @@ public:
     {
         window.clear({0.1f, 0.1f, 0.1f, 1.0f});
 
-        const auto [width, height] = window.framebuffer_size();
+        const auto [width, height] = window.framebufferSize();
 
         glm::mat4 model(1.0f);
 
