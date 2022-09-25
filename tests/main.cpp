@@ -75,26 +75,31 @@ TEST(App, CanReportShaderStageCompileErrors)
         std::string errorLog;
     };
 
-    // Very subtle error, with an unsubtle error message
-    ShaderStageCompile with_errors(
-        R"(#version 330 core
+    {
+        ShaderStageCompile with_errors(
+            R"(#version 330 core
            in vec3 vPosition;
            void main() {
             gl_Position = vPosition;
            })");
-    ShaderStageCompile with_no_errors(
-        R"(#version 330 core
+
+        with_errors.run_windowless();
+
+        ASSERT_FALSE(with_errors.compileStatus);
+        EXPECT_EQ("ERROR: 0:4: Incompatible types (vec4 and vec3) in assignment (and no available implicit conversion)\n", with_errors.errorLog);
+    }
+
+    {
+        ShaderStageCompile with_no_errors(
+            R"(#version 330 core
            in vec4 vPosition;
            void main() {
             gl_Position = vPosition;
            })");
 
-    with_errors.run_windowless();
-    with_no_errors.run_windowless();
-
-    ASSERT_TRUE(with_no_errors.compileStatus);
-    ASSERT_FALSE(with_errors.compileStatus);
-    EXPECT_EQ("ERROR: 0:4: Incompatible types (vec4 and vec3) in assignment (and no available implicit conversion)\n", with_errors.errorLog);
+        with_no_errors.run_windowless();
+        EXPECT_TRUE(with_no_errors.compileStatus);
+    }
 }
 
 TEST(App, CanReportShaderCompileErrors)
@@ -167,27 +172,37 @@ TEST(App, CanReportShaderCompileErrors)
         }
     )";
 
-    ShaderCompileTest with_vs_errors(vs_with_errors, fs_without_errors);
-    ShaderCompileTest with_fs_errors(vs_without_errors, fs_with_errors);
-    ShaderCompileTest with_link_errors(vs_without_errors, fs_with_mismatch);
-    ShaderCompileTest with_no_errors(vs_without_errors, fs_without_errors);
+    {
+        ShaderCompileTest with_vs_errors(vs_with_errors, fs_without_errors);
+        with_vs_errors.run_windowless();
 
-    with_vs_errors.run_windowless();
-    with_fs_errors.run_windowless();
-    with_link_errors.run_windowless();
-    with_no_errors.run_windowless();
+        EXPECT_FALSE(with_vs_errors.compileStatus);
+        EXPECT_EQ("VERTEX SHADER ERROR: 0:4: Incompatible types (vec4 and vec3) in assignment (and no available implicit conversion)\n", with_vs_errors.errorLog);
+    }
 
-    EXPECT_FALSE(with_vs_errors.compileStatus);
-    EXPECT_EQ("VERTEX SHADER ERROR: 0:4: Incompatible types (vec4 and vec3) in assignment (and no available implicit conversion)\n", with_vs_errors.errorLog);
+    {
+        ShaderCompileTest with_fs_errors(vs_without_errors, fs_with_errors);
+        with_fs_errors.run_windowless();
 
-    EXPECT_FALSE(with_fs_errors.compileStatus);
-    EXPECT_EQ("FRAGMENT SHADER ERROR: 0:2: '' :  #version required and missing.\n", with_fs_errors.errorLog);
+        EXPECT_FALSE(with_fs_errors.compileStatus);
+        EXPECT_EQ("FRAGMENT SHADER ERROR: 0:2: '' :  #version required and missing.\n", with_fs_errors.errorLog);
+    }
 
-    EXPECT_FALSE(with_link_errors.compileStatus);
-    EXPECT_EQ("LINKING ERROR: Input of fragment shader 'normal' not written by vertex shader\n", with_link_errors.errorLog);
+    {
+        ShaderCompileTest with_link_errors(vs_without_errors, fs_with_mismatch);
+        with_link_errors.run_windowless();
 
-    EXPECT_TRUE(with_no_errors.compileStatus);
-    EXPECT_EQ("", with_no_errors.errorLog);
+        EXPECT_FALSE(with_link_errors.compileStatus);
+        EXPECT_EQ("LINKING ERROR: Input of fragment shader 'normal' not written by vertex shader\n", with_link_errors.errorLog);
+    }
+
+    {
+        ShaderCompileTest with_no_errors(vs_without_errors, fs_without_errors);
+        with_no_errors.run_windowless();
+
+        EXPECT_TRUE(with_no_errors.compileStatus);
+        EXPECT_EQ("", with_no_errors.errorLog);
+    }
 }
 
 TEST(App, CanAcquireShaderAttributes)
