@@ -34,11 +34,6 @@ namespace applesauce
 
     public:
         VertexArray() : GLResource(genGlVertexArray()) {}
-
-        void bind()
-        {
-            glBindVertexArray(glId());
-        }
         ~VertexArray()
         {
             if (glId() != 0)
@@ -46,6 +41,16 @@ namespace applesauce
                 auto id = glId();
                 glDeleteVertexArrays(1, &id);
             }
+        }
+
+        void bind()
+        {
+            glBindVertexArray(glId());
+        }
+
+        void unbind()
+        {
+            glBindVertexArray(0);
         }
     };
 }
@@ -65,6 +70,11 @@ TEST_F(AppleSauceVertexArray, CanCreateNewVertexArray)
 
         EXPECT_NE(boundId, 0) << "boundId is expected to be non-zero";
         EXPECT_TRUE(glIsVertexArray(boundId)) << "OpenGL should recognize boundId as a vertex array";
+
+        va.unbind();
+        GLint boundId;
+        glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &boundId);
+        EXPECT_EQ(boundId, 0) << "boundId is expected to be zero after unbind";
     }
     EXPECT_FALSE(glIsVertexArray(boundId)) << "Outside of scope, boundId should no longer be a vertex array";
 }
