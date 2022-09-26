@@ -7,6 +7,35 @@
 
 namespace applesauce
 {
+    class GLResource
+    {
+    public:
+        GLResource() : id(0) {}
+        GLResource(const GLuint resourceId) : id(resourceId) {}
+
+        GLResource(const GLResource &) = delete;
+        GLResource(GLResource &&other) : GLResource(other.id)
+        {
+            other.id = 0;
+        }
+        GLResource &operator=(const GLResource &) = delete;
+        GLResource &operator=(GLResource &&other)
+        {
+            id = other.id;
+            other.id = 0;
+            return *this;
+        }
+
+    protected:
+        GLuint glId() const
+        {
+            return id;
+        }
+
+    private:
+        GLuint id;
+    };
+
     class Buffer : public GLResource
     {
     public:
@@ -44,7 +73,7 @@ namespace applesauce
 
         void bind()
         {
-            glBindBuffer(_target, id);
+            glBindBuffer(_target, glId());
         }
 
         void unbind()

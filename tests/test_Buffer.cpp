@@ -114,3 +114,40 @@ TEST_F(AppleSauceBuffer, CanVerifyBuffersAreDistinct)
     EXPECT_EQ(expected1, result1);
     EXPECT_EQ(expected2, result2);
 }
+
+TEST_F(AppleSauceBuffer, CanOnlyMoveConstructAndAssign)
+{
+    applesauce::Buffer buffer1(sizeof(float), applesauce::Buffer::Type::vertex);
+
+    buffer1.bind();
+    GLint buffer1Id;
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &buffer1Id);
+
+    EXPECT_NE(buffer1Id, 0) << "buffer1 should cause a non-zero ID to be bound";
+
+    applesauce::Buffer buffer2(std::move(buffer1));
+
+    buffer2.bind();
+    GLint buffer2Id;
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &buffer2Id);
+
+    EXPECT_EQ(buffer2Id, buffer1Id) << "When bounding buffer2, we should get the same ID as buffer1 originally had";
+
+    buffer1.bind();
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &buffer1Id);
+
+    EXPECT_EQ(buffer1Id, 0) << "Now, binding buffer1 has the same effect as unbind (setting to 0)";
+
+    applesauce::Buffer buffer3 = std::move(buffer2);
+
+    buffer3.bind();
+    GLint buffer3Id;
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &buffer3Id);
+
+    EXPECT_EQ(buffer3Id, buffer2Id) << "When bounding buffer3, we should get the same ID as buffer2 got from buffer1";
+
+    buffer2.bind();
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &buffer2Id);
+
+    EXPECT_EQ(buffer2Id, 0) << "Now, binding buffer2 has the same effect as unbind (setting to 0)";
+}
