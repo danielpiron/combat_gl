@@ -10,29 +10,30 @@ class AppleSauceBuffer : public AppleSauceTest
 {
 };
 
+struct TestVertex
+{
+    glm::vec3 position;
+    glm::vec2 texcoord;
+
+    bool operator==(const TestVertex &rhs) const
+    {
+        return position == rhs.position && texcoord == rhs.texcoord;
+    }
+};
+
 TEST_F(AppleSauceBuffer, CanBeMappedToVertexPointer)
 {
-    struct Vertex
-    {
-        glm::vec3 position;
-        glm::vec2 texcoord;
 
-        bool operator==(const Vertex &rhs) const
-        {
-            return position == rhs.position && texcoord == rhs.texcoord;
-        }
-    };
-
-    Vertex data[] = {
+    TestVertex data[] = {
         {{-1.0, -1.0, 0}, {0, 1.0f}},
         {{1.0, -1.0, 0}, {1.0f, 1.0f}},
         {{-1.0, 1.0, 0}, {1.0f, 0}},
     };
 
-    applesauce::Buffer buffer(sizeof(Vertex) * 3, applesauce::Buffer::Type::vertex);
+    applesauce::Buffer buffer(sizeof(TestVertex) * 3, applesauce::Buffer::Type::vertex);
 
     buffer.bind();
-    auto ptr = reinterpret_cast<Vertex *>(buffer.map());
+    auto ptr = reinterpret_cast<TestVertex *>(buffer.map());
 
     ASSERT_TRUE(ptr != nullptr) << "A nullptr indicates a problem with glMapBuffer";
 
@@ -42,7 +43,7 @@ TEST_F(AppleSauceBuffer, CanBeMappedToVertexPointer)
 
     ASSERT_TRUE(buffer.unmap()) << "False indicates that OpenGL picked up a problem during pointer operations";
 
-    Vertex result[3];
+    TestVertex result[3];
     glGetBufferSubData(GL_ARRAY_BUFFER, 0, buffer.size(), result);
     buffer.unbind();
 
@@ -150,4 +151,12 @@ TEST_F(AppleSauceBuffer, CanOnlyMoveConstructAndAssign)
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &buffer2Id);
 
     EXPECT_EQ(buffer2Id, 0) << "Now, binding buffer2 has the same effect as unbind (setting to 0)";
+}
+
+TEST_F(AppleSauceBuffer, CanSpecifyElementSize)
+{
+    applesauce::Buffer buffer(sizeof(TestVertex) * 3, applesauce::Buffer::Type::vertex, sizeof(TestVertex));
+
+    EXPECT_EQ(buffer.size(), sizeof(TestVertex) * 3);
+    EXPECT_EQ(buffer.elementCount(), 3);
 }

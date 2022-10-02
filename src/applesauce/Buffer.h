@@ -64,19 +64,20 @@ namespace applesauce
         }
 
     public:
-        Buffer(size_t size, Type type) : GLResource(genGlBuffer()), _target(getGlTarget(type)), _size(size)
+        Buffer(size_t size, Type type, size_t elementSize = 1)
+            : GLResource(genGlBuffer()), _target(getGlTarget(type)), _size(size), _elementSize(elementSize)
         {
             bind();
             glBufferData(_target, size, nullptr, GL_STATIC_DRAW);
             unbind();
         }
 
-        void bind()
+        void bind() const
         {
             glBindBuffer(_target, glId());
         }
 
-        void unbind()
+        void unbind() const
         {
             glBindBuffer(_target, 0);
         }
@@ -91,14 +92,20 @@ namespace applesauce
             return glUnmapBuffer(_target);
         }
 
-        size_t size()
+        size_t size() const
         {
             return _size;
+        }
+
+        size_t elementCount() const
+        {
+            return _size / _elementSize;
         }
 
     private:
         const GLenum _target;
         const size_t _size;
+        const size_t _elementSize;
     };
 }
 

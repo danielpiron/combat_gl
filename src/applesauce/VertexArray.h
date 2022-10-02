@@ -45,17 +45,17 @@ namespace applesauce
             }
         }
 
-        void bind()
+        void bind() const
         {
             glBindVertexArray(glId());
         }
 
-        void unbind()
+        void unbind() const
         {
             glBindVertexArray(0);
         }
 
-        void addVertexBuffer(applesauce::Buffer &buffer, const VertexBufferDescription &descriptions)
+        void addVertexBuffer(const applesauce::Buffer &buffer, const VertexBufferDescription &descriptions)
         {
             bind();
             buffer.bind();
