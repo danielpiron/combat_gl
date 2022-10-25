@@ -10,18 +10,24 @@ namespace applesauce
     class VertexBuffer : public applesauce::Buffer
     {
     public:
-        VertexBuffer(std::initializer_list<T> init)
-            : applesauce::Buffer(init.size() * sizeof(T),
+        template <class InputIt>
+        VertexBuffer(InputIt first, InputIt last)
+            : applesauce::Buffer((last - first) * sizeof(T),
                                  applesauce::Buffer::Type::vertex, sizeof(T))
         {
             bind();
             auto ptr = reinterpret_cast<T *>(map());
-            for (auto &element : init)
+            for (; first != last; first++)
             {
-                *ptr++ = element;
+                *ptr++ = *first;
             }
             unmap();
             unbind();
+        }
+
+        VertexBuffer(std::initializer_list<T> init)
+            : VertexBuffer(std::begin(init), std::end(init))
+        {
         }
     };
 }
