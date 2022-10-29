@@ -3,6 +3,7 @@
 
 #include "AppleSauceTest.h"
 #include <applesauce/VertexArray.h>
+#include <applesauce/VertexBuffer.h>
 
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
@@ -43,7 +44,7 @@ TEST_F(AppleSauceVertexArray, CanSpecifyVertexAttibutes)
     };
 
     applesauce::VertexArray va;
-    applesauce::Buffer vb(sizeof(Vertex) * 3, applesauce::Buffer::Type::vertex);
+    applesauce::VertexBuffer<Vertex> vb(3);
 
     vb.bind();
     // Grab the ID of this buffer for later.

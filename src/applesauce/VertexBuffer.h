@@ -10,6 +10,12 @@ namespace applesauce
     class VertexBuffer : public applesauce::Buffer
     {
     public:
+        VertexBuffer(size_t elementCount)
+            : applesauce::Buffer(elementCount * sizeof(T),
+                                 applesauce::Buffer::Type::vertex, sizeof(T))
+        {
+        }
+
         template <class InputIt>
         VertexBuffer(InputIt first, InputIt last)
             : applesauce::Buffer((last - first) * sizeof(T),
