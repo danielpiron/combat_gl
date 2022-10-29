@@ -1,4 +1,6 @@
 #include "applesauce/App.h"
+#include "applesauce/VertexBuffer.h"
+#include "applesauce/VertexArray.h"
 
 #define GLM_SWIZZLE
 #include <glm/gtc/matrix_transform.hpp>
@@ -84,14 +86,13 @@ public:
 
     void init() override
     {
-
         window.setScrollHandler(this);
         window.setMouseHandler(this);
 
         const char *vertex_shader_text = R"(
            #version 330 core
-           in vec3 vPosition;
-           in vec3 vNormal;
+           layout (location = 0) in vec3 vPosition;
+           layout (location = 1) in vec3 vNormal;
 
            uniform mat4 mMVP;
 
@@ -121,28 +122,55 @@ public:
             return;
         }
 
-#include "verts.h"
-
         glUseProgram(shader->glId());
 
-        glGenVertexArrays(1, &vao_triangles);
-        glBindVertexArray(vao_triangles);
+        cubeBuffer = std::make_shared<applesauce::VertexBuffer<Vertex>>(std::initializer_list<Vertex>{
+            {{0.5, 1.0, -0.5}, {0.0, 1.0, 0.0}},
+            {{-0.5, 1.0, 0.5}, {0.0, 1.0, 0.0}},
+            {{0.5, 1.0, 0.5}, {0.0, 1.0, 0.0}},
+            {{0.5, 0.0, 0.5}, {0.0, 0.0, 1.0}},
+            {{-0.5, 1.0, 0.5}, {0.0, 0.0, 1.0}},
+            {{-0.5, 0.0, 0.5}, {0.0, 0.0, 1.0}},
+            {{-0.5, 0.0, 0.5}, {-1.0, 0.0, 0.0}},
+            {{-0.5, 1.0, -0.5}, {-1.0, 0.0, 0.0}},
+            {{-0.5, 0.0, -0.5}, {-1.0, 0.0, 0.0}},
+            {{-0.5, 0.0, -0.5}, {0.0, -1.0, -0.0}},
+            {{0.5, 0.0, 0.5}, {0.0, -1.0, -0.0}},
+            {{-0.5, 0.0, 0.5}, {0.0, -1.0, -0.0}},
+            {{0.5, 0.0, -0.5}, {1.0, 0.0, 0.0}},
+            {{0.5, 1.0, 0.5}, {1.0, 0.0, 0.0}},
+            {{0.5, 0.0, 0.5}, {1.0, 0.0, 0.0}},
+            {{-0.5, 0.0, -0.5}, {0.0, -0.0, -1.0}},
+            {{0.5, 1.0, -0.5}, {0.0, -0.0, -1.0}},
+            {{0.5, 0.0, -0.5}, {0.0, -0.0, -1.0}},
+            {{0.5, 1.0, -0.5}, {0.0, 1.0, -0.0}},
+            {{-0.5, 1.0, -0.5}, {0.0, 1.0, -0.0}},
+            {{-0.5, 1.0, 0.5}, {0.0, 1.0, -0.0}},
+            {{0.5, 0.0, 0.5}, {0.0, 0.0, 1.0}},
+            {{0.5, 1.0, 0.5}, {0.0, 0.0, 1.0}},
+            {{-0.5, 1.0, 0.5}, {0.0, 0.0, 1.0}},
+            {{-0.5, 0.0, 0.5}, {-1.0, -0.0, 0.0}},
+            {{-0.5, 1.0, 0.5}, {-1.0, -0.0, 0.0}},
+            {{-0.5, 1.0, -0.5}, {-1.0, -0.0, 0.0}},
+            {{-0.5, 0.0, -0.5}, {0.0, -1.0, -0.0}},
+            {{0.5, 0.0, -0.5}, {0.0, -1.0, -0.0}},
+            {{0.5, 0.0, 0.5}, {0.0, -1.0, -0.0}},
+            {{0.5, 0.0, -0.5}, {1.0, 0.0, 0.0}},
+            {{0.5, 1.0, -0.5}, {1.0, 0.0, 0.0}},
+            {{0.5, 1.0, 0.5}, {1.0, 0.0, 0.0}},
+            {{-0.5, 0.0, -0.5}, {0.0, 0.0, -1.0}},
+            {{-0.5, 1.0, -0.5}, {0.0, 0.0, -1.0}},
+            {{0.5, 1.0, -0.5}, {0.0, 0.0, -1.0}},
+        });
 
-        const auto pos = shader->attributes()["vPosition"].location;
-        const auto norm = shader->attributes()["vNormal"].location;
+        cubeMesh = std::make_shared<applesauce::VertexArray>();
 
-        glBindBuffer(GL_ARRAY_BUFFER, buffer->glId());
+        applesauce::VertexBufferDescription desc{
+            {applesauce::VertexAttribute::position, 3, offsetof(Vertex, position), sizeof(Vertex)},
+            {applesauce::VertexAttribute::normal, 3, offsetof(Vertex, normal), sizeof(Vertex)},
+        };
 
-        std::cout << "Vertex Size: " << sizeof(Vertex) << std::endl;
-        std::cout << "Vertex Position: " << sizeof(decltype(Vertex::position)) << std::endl;
-        std::cout << "Vertex Normal: " << sizeof(decltype(Vertex::normal)) << std::endl;
-        std::cout << "Offset of Position: " << offsetof(Vertex, position) << std::endl;
-        std::cout << "Offset of Normal: " << offsetof(Vertex, normal) << std::endl;
-        VERTEX_PROPERTY(pos, Vertex, position);
-        VERTEX_PROPERTY(norm, Vertex, normal);
-
-        glEnableVertexAttribArray(pos);
-        glEnableVertexAttribArray(norm);
+        cubeMesh->addVertexBuffer(*cubeBuffer, desc);
 
         glfwSwapInterval(1);
 
@@ -164,20 +192,19 @@ public:
                                      glm::vec3(0, 0, 0),
                                      glm::vec3(0, 1, 0));
         glm::mat4 projection = glm::perspectiveFov(glm::radians(60.f), static_cast<float>(width), static_cast<float>(height), 0.1f, 100.0f);
-
         glm::mat4 MVP = projection * view * model;
 
         const auto mvp = shader->uniforms()["mMVP"].location;
         glUniformMatrix4fv(mvp, 1, GL_FALSE, glm::value_ptr(MVP));
 
-        glBindVertexArray(vao_triangles);
-        glDrawArrays(GL_TRIANGLES, 0, buffer->size());
+        cubeMesh->bind();
+        glDrawArrays(GL_TRIANGLES, 0, 36);
     }
 
 private:
-    GLuint vao_triangles = 0;
     std::shared_ptr<Shader> shader;
-    std::shared_ptr<Buffer<Vertex>> buffer;
+    std::shared_ptr<applesauce::VertexBuffer<Vertex>> cubeBuffer;
+    std::shared_ptr<applesauce::VertexArray> cubeMesh;
 
     float pitch = 0;
     float theta = 0;
