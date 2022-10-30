@@ -198,7 +198,7 @@ public:
         glUniformMatrix4fv(mvp, 1, GL_FALSE, glm::value_ptr(MVP));
 
         cubeMesh->bind();
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDrawArrays(GL_TRIANGLES, 0, cubeMesh->safeElementCount());
     }
 
 private:

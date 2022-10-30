@@ -59,6 +59,8 @@ TEST_F(AppleSauceVertexArray, CanSpecifyVertexAttibutes)
 
     va.addVertexBuffer(vb, desc);
 
+    EXPECT_EQ(3, va.safeElementCount());
+
     va.bind();
 
     { // Check position attributes

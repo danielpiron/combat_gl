@@ -35,7 +35,7 @@ namespace applesauce
         }
 
     public:
-        VertexArray() : GLResource(genGlVertexArray()) {}
+        VertexArray() : GLResource(genGlVertexArray()), _safeElementCount(0) {}
         ~VertexArray()
         {
             if (glId() != 0)
@@ -69,6 +69,16 @@ namespace applesauce
 
             buffer.unbind();
             unbind();
+
+            _safeElementCount = buffer.elementCount();
         }
+
+        size_t safeElementCount() const
+        {
+            return _safeElementCount;
+        }
+
+    private:
+        size_t _safeElementCount;
     };
 }
