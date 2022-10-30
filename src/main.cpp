@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <memory>
 #include <ostream>
+#include <vector>
 
 struct Vertex
 {
@@ -163,7 +164,17 @@ public:
             {{0.5, 1.0, -0.5}, {0.0, 0.0, -1.0}},
         });
 
-        cubeMesh = std::make_shared<applesauce::VertexArray>();
+        planeBuffer = std::make_shared<applesauce::VertexBuffer<Vertex>>(std::initializer_list<Vertex>{
+            {{-0.5, 0.0, 0.5}, {-0.0, 1.0, -0.0}},
+            {{0.5, 0.0, -0.5}, {-0.0, 1.0, -0.0}},
+            {{-0.5, 0.0, -0.5}, {-0.0, 1.0, -0.0}},
+            {{-0.5, 0.0, 0.5}, {0.0, 1.0, -0.0}},
+            {{0.5, 0.0, 0.5}, {0.0, 1.0, -0.0}},
+            {{0.5, 0.0, -0.5}, {0.0, 1.0, -0.0}},
+        });
+
+        auto cubeMesh = std::make_shared<applesauce::VertexArray>();
+        auto planeMesh = std::make_shared<applesauce::VertexArray>();
 
         applesauce::VertexBufferDescription desc{
             {applesauce::VertexAttribute::position, 3, offsetof(Vertex, position), sizeof(Vertex)},
@@ -171,6 +182,10 @@ public:
         };
 
         cubeMesh->addVertexBuffer(*cubeBuffer, desc);
+        planeMesh->addVertexBuffer(*planeBuffer, desc);
+
+        meshes.push_back(planeMesh);
+        meshes.push_back(cubeMesh);
 
         glfwSwapInterval(1);
 
@@ -197,14 +212,15 @@ public:
         const auto mvp = shader->uniforms()["mMVP"].location;
         glUniformMatrix4fv(mvp, 1, GL_FALSE, glm::value_ptr(MVP));
 
-        cubeMesh->bind();
-        glDrawArrays(GL_TRIANGLES, 0, cubeMesh->safeElementCount());
+        meshes[1]->bind();
+        glDrawArrays(GL_TRIANGLES, 0, meshes[1]->safeElementCount());
     }
 
 private:
     std::shared_ptr<Shader> shader;
     std::shared_ptr<applesauce::VertexBuffer<Vertex>> cubeBuffer;
-    std::shared_ptr<applesauce::VertexArray> cubeMesh;
+    std::shared_ptr<applesauce::VertexBuffer<Vertex>> planeBuffer;
+    std::vector<std::shared_ptr<applesauce::VertexArray>> meshes;
 
     float pitch = 0;
     float theta = 0;
