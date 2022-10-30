@@ -192,6 +192,18 @@ public:
         const auto [width, height] = window.framebufferSize();
         glViewport(0, 0, width, height);
         glEnable(GL_DEPTH_TEST);
+
+        //
+        // ****************************
+        // *            **            *
+        // *            **            *
+        // *  **                  **  *
+        // *   *      *    *      *   *
+        // *   *      *    *      *   *
+        // *  **                  **  *
+        // *            **            *
+        // *            **            *
+        // ****************************
     }
 
     void display() override
