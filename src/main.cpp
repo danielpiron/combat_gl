@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <memory>
 #include <ostream>
+#include <sstream>
 #include <vector>
 
 struct Vertex
@@ -51,6 +52,13 @@ std::ostream &operator<<(std::ostream &os, const Window::MouseHandler::Button &b
 
 class Triangles : public App, public Window::ScrollHandler, public Window::MouseHandler
 {
+public:
+    struct Entity
+    {
+        glm::vec3 position;
+        size_t meshIndex;
+    };
+
 public:
     void onScroll(double, double yoffset) override
     {
@@ -193,17 +201,32 @@ public:
         glViewport(0, 0, width, height);
         glEnable(GL_DEPTH_TEST);
 
-        //
-        // ****************************
-        // *            **            *
-        // *            **            *
-        // *  **                  **  *
-        // *   *      *    *      *   *
-        // *   *      *    *      *   *
-        // *  **                  **  *
-        // *            **            *
-        // *            **            *
-        // ****************************
+        const char *playField = "****************************\n"
+                                "*            **            *\n"
+                                "*            **            *\n"
+                                "*  **                  **  *\n"
+                                "*   *      *    *      *   *\n"
+                                "*   *      *    *      *   *\n"
+                                "*  **                  **  *\n"
+                                "*            **            *\n"
+                                "*            **            *\n"
+                                "****************************";
+
+        std::stringstream stream(playField);
+        std::string line;
+
+        int row = 0;
+        while (std::getline(stream, line, '\n'))
+        {
+            int col = 0;
+            for (const auto &character : line)
+            {
+                size_t idx = character == '*' ? 1 : 0;
+                entities.push_back({{col, 0, row}, idx});
+                col++;
+            }
+            row++;
+        }
     }
 
     void display() override
@@ -212,20 +235,25 @@ public:
 
         const auto [width, height] = window.framebufferSize();
 
-        glm::mat4 model(1.0f);
-
         glm::vec4 cameraPos = glm::yawPitchRoll(theta, pitch, 0.0f) * glm::vec4(0, 0, -dist, 0);
         glm::mat4 view = glm::lookAt(glm::vec3(cameraPos),
                                      glm::vec3(0, 0, 0),
                                      glm::vec3(0, 1, 0));
         glm::mat4 projection = glm::perspectiveFov(glm::radians(60.f), static_cast<float>(width), static_cast<float>(height), 0.1f, 100.0f);
-        glm::mat4 MVP = projection * view * model;
 
-        const auto mvp = shader->uniforms()["mMVP"].location;
-        glUniformMatrix4fv(mvp, 1, GL_FALSE, glm::value_ptr(MVP));
+        for (const auto &entity : entities)
+        {
+            glm::mat4 model(1.0f);
+            model = glm::translate(model, entity.position);
 
-        meshes[1]->bind();
-        glDrawArrays(GL_TRIANGLES, 0, meshes[1]->safeElementCount());
+            glm::mat4 MVP = projection * view * model;
+
+            const auto mvp = shader->uniforms()["mMVP"].location;
+            glUniformMatrix4fv(mvp, 1, GL_FALSE, glm::value_ptr(MVP));
+
+            meshes[entity.meshIndex]->bind();
+            glDrawArrays(GL_TRIANGLES, 0, meshes[1]->safeElementCount());
+        }
     }
 
 private:
@@ -233,6 +261,7 @@ private:
     std::shared_ptr<applesauce::VertexBuffer<Vertex>> cubeBuffer;
     std::shared_ptr<applesauce::VertexBuffer<Vertex>> planeBuffer;
     std::vector<std::shared_ptr<applesauce::VertexArray>> meshes;
+    std::vector<Entity> entities;
 
     float pitch = 0;
     float theta = 0;
