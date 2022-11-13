@@ -216,6 +216,7 @@ public:
         std::string line;
 
         int row = 0;
+        int maxCol = -1;
         while (std::getline(stream, line, '\n'))
         {
             int col = 0;
@@ -225,7 +226,14 @@ public:
                 entities.push_back({{col, 0, row}, idx});
                 col++;
             }
+            maxCol = std::max(maxCol, col);
             row++;
+        }
+
+        for (auto &entity : entities)
+        {
+            entity.position.x -= maxCol / 2;
+            entity.position.z -= row / 2;
         }
     }
 
