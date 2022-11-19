@@ -2,6 +2,9 @@
 
 #include <glad/glad.h>
 
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/mat4x4.hpp>
+
 #include <map>
 #include <string>
 #include <vector>
@@ -196,6 +199,12 @@ public:
             result.emplace(name, Uniform{uniformLocation, uniformType, uniformSize});
         }
         return result;
+    }
+
+    void setUniform(const char *name, const glm::mat4 &matrix)
+    {
+        const auto matrix_loc = uniforms()[name].location;
+        glUniformMatrix4fv(matrix_loc, 1, GL_FALSE, glm::value_ptr(matrix));
     }
 
     GLuint glId() const

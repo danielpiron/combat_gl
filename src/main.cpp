@@ -260,8 +260,7 @@ public:
 
             glm::mat4 MVP = projection * view * model;
 
-            const auto mvp = shader->uniforms()["mMVP"].location;
-            glUniformMatrix4fv(mvp, 1, GL_FALSE, glm::value_ptr(MVP));
+            shader->setUniform("mMVP", MVP);
 
             meshes[entity.meshIndex]->bind();
             glDrawArrays(GL_TRIANGLES, 0, meshes[1]->safeElementCount());
