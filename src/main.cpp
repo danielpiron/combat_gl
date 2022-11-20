@@ -1,10 +1,12 @@
 #include "applesauce/App.h"
 #include "applesauce/VertexBuffer.h"
 #include "applesauce/VertexArray.h"
+#include "applesauce/Shader.h"
 
 #define GLM_SWIZZLE
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
@@ -102,21 +104,34 @@ public:
            layout (location = 0) in vec3 vPosition;
            layout (location = 1) in vec3 vNormal;
 
-           uniform mat4 mMVP;
-           uniform vec4 ambientLight;
+           uniform mat4 MVPMatrix;
+           uniform mat3 NormalMatrix;
 
-           out vec4 color;
+           out vec3 normal;
+
            void main() {
-            gl_Position = mMVP * vec4(vPosition, 1);
-            color = ambientLight; // vec4(vNormal * 0.5 + vec3(0.5), 1);
+            normal = normalize(NormalMatrix * vNormal);
+            gl_Position = MVPMatrix * vec4(vPosition, 1);
            })";
 
         const char *fragment_shader_text = R"(
         #version 330 core
-        in vec4 color;
+
+        uniform vec3 Color;
+        uniform vec3 Ambient;
+        uniform vec3 LightColor;
+        uniform vec3 LightDirection;
+
+        in vec3 normal;
         out vec4 fColor;
+
         void main() {
-            fColor = color;
+            float diffuse = max(0.0, dot(normal, LightDirection));
+            vec3 scatteredLight = Ambient + LightColor * diffuse;
+
+            vec3 rgb = min(Color * scatteredLight, vec3(1.0));
+
+            fColor = vec4(rgb, 1.0);
         }
     )";
 
@@ -201,20 +216,24 @@ public:
         glViewport(0, 0, width, height);
         glEnable(GL_DEPTH_TEST);
 
-        const char *playField = "****************************\n"
-                                "*            **            *\n"
-                                "*            **            *\n"
-                                "*                          *\n"
-                                "*                          *\n"
-                                "*  **                  **  *\n"
-                                "*   *      *    *      *   *\n"
-                                "*   *      *    *      *   *\n"
-                                "*  **                  **  *\n"
-                                "*                          *\n"
-                                "*                          *\n"
-                                "*            **            *\n"
-                                "*            **            *\n"
-                                "****************************";
+        const char *playField = "********************************\n"
+                                "*                              *\n"
+                                "*                              *\n"
+                                "*              **              *\n"
+                                "*              **              *\n"
+                                "*              **              *\n"
+                                "*    **                  **    *\n"
+                                "*     *                  *     *\n"
+                                "*     *   ***      ***   *     *\n"
+                                "*     *   ***      ***   *     *\n"
+                                "*     *                  *     *\n"
+                                "*    **                  **    *\n"
+                                "*              **              *\n"
+                                "*              **              *\n"
+                                "*              **              *\n"
+                                "*                              *\n"
+                                "*                              *\n"
+                                "********************************";
 
         std::stringstream stream(playField);
         std::string line;
@@ -258,12 +277,21 @@ public:
             glm::mat4 model(1.0f);
             model = glm::translate(model, entity.position);
 
-            glm::mat4 MVP = projection * view * model;
+            glm::mat4 modelView = view * model;
+            glm::mat3 normalMatrix = glm::mat3(modelView);
 
-            glm::vec4 ambientLight{0.2, 0.2, 0.3, 1.0};
+            glm::mat4 MVPMatrix = projection * modelView;
+            glm::vec3 LightDirection = normalMatrix * glm::rotateX(glm::vec3{0.0, 1.0, 0.0}, 1.0f);
 
-            shader->setUniform("mMVP", MVP);
-            shader->setUniform("ambientLight", ambientLight);
+            glm::vec3 color = entity.meshIndex == 1 ? glm::vec3{0.6, 0.6, 1.0}
+                                                    : glm::vec3{1.0, 0.6, 0.1};
+
+            shader->setUniform("MVPMatrix", MVPMatrix);
+            shader->setUniform("NormalMatrix", normalMatrix);
+            shader->setUniform("Color", color);
+            shader->setUniform("Ambient", glm::vec3{0.2, 0.2, 0.3});
+            shader->setUniform("LightColor", glm::vec3{1.0, 1.0, 1.0});
+            shader->setUniform("LightDirection", LightDirection);
 
             meshes[entity.meshIndex]->bind();
             glDrawArrays(GL_TRIANGLES, 0, meshes[entity.meshIndex]->safeElementCount());
