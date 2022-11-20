@@ -203,8 +203,14 @@ public:
 
     void setUniform(const char *name, const glm::mat4 &matrix)
     {
-        const auto matrix_loc = uniforms()[name].location;
-        glUniformMatrix4fv(matrix_loc, 1, GL_FALSE, glm::value_ptr(matrix));
+        const auto loc = uniforms()[name].location;
+        glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
+    }
+
+    void setUniform(const char *name, const glm::vec4 &vector)
+    {
+        const auto loc = uniforms()[name].location;
+        glUniform4fv(loc, 1, glm::value_ptr(vector));
     }
 
     GLuint glId() const

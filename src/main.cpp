@@ -4,7 +4,6 @@
 
 #define GLM_SWIZZLE
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/mat4x4.hpp>
@@ -104,11 +103,12 @@ public:
            layout (location = 1) in vec3 vNormal;
 
            uniform mat4 mMVP;
+           uniform vec4 ambientLight;
 
            out vec4 color;
            void main() {
             gl_Position = mMVP * vec4(vPosition, 1);
-            color = vec4(vNormal * 0.5 + vec3(0.5), 1);
+            color = ambientLight; // vec4(vNormal * 0.5 + vec3(0.5), 1);
            })";
 
         const char *fragment_shader_text = R"(
@@ -260,10 +260,13 @@ public:
 
             glm::mat4 MVP = projection * view * model;
 
+            glm::vec4 ambientLight{0.2, 0.2, 0.3, 1.0};
+
             shader->setUniform("mMVP", MVP);
+            shader->setUniform("ambientLight", ambientLight);
 
             meshes[entity.meshIndex]->bind();
-            glDrawArrays(GL_TRIANGLES, 0, meshes[1]->safeElementCount());
+            glDrawArrays(GL_TRIANGLES, 0, meshes[entity.meshIndex]->safeElementCount());
         }
     }
 
