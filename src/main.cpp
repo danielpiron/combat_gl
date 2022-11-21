@@ -105,12 +105,17 @@ public:
            layout (location = 1) in vec3 vNormal;
 
            uniform mat4 MVPMatrix;
+           uniform mat4 ModelViewMatrix;
            uniform mat3 NormalMatrix;
 
            out vec3 normal;
+           out vec3 halfVector;
 
            void main() {
             normal = normalize(NormalMatrix * vNormal);
+
+            vec3 pos = (ModelViewMatrix * vec4(vPosition, 1)).rgb;
+            halfVector = 0.5 * (normalize(-pos) + normal);
             gl_Position = MVPMatrix * vec4(vPosition, 1);
            })";
 
@@ -121,15 +126,26 @@ public:
         uniform vec3 Ambient;
         uniform vec3 LightColor;
         uniform vec3 LightDirection;
+        uniform float Shininess;
+        uniform float Strength;
 
+        in vec3 halfVector;
         in vec3 normal;
         out vec4 fColor;
 
         void main() {
             float diffuse = max(0.0, dot(normal, LightDirection));
-            vec3 scatteredLight = Ambient + LightColor * diffuse;
+            float specular = max(0.0, dot(normal, halfVector));
 
-            vec3 rgb = min(Color * scatteredLight, vec3(1.0));
+            if (diffuse == 0.0) {
+                specular = 0.0;
+            } else {
+                specular = pow(specular, Shininess);
+            }
+            vec3 scatteredLight = Ambient + LightColor * diffuse;
+            vec3 reflectedLight = LightColor * specular * Strength;
+
+            vec3 rgb = min(Color * scatteredLight + reflectedLight, vec3(1.0));
 
             fColor = vec4(rgb, 1.0);
         }
@@ -677,6 +693,7 @@ public:
             glm::mat4 modelView = view * model;
             glm::mat3 normalMatrix = glm::mat3(modelView);
 
+            glm::mat4 ModelViewMatrix = modelView;
             glm::mat4 MVPMatrix = projection * modelView;
             glm::vec3 LightDirection = normalMatrix * glm::rotateX(glm::vec3{0.0, 1.0, 0.0}, 1.0f);
 
@@ -691,11 +708,14 @@ public:
             }
 
             shader->set("MVPMatrix", MVPMatrix);
+            shader->set("ModelViewMatrix", ModelViewMatrix);
             shader->set("NormalMatrix", normalMatrix);
             shader->set("Color", color);
             shader->set("Ambient", glm::vec3{0.2, 0.2, 0.3});
             shader->set("LightColor", glm::vec3{1.0, 1.0, 1.0});
             shader->set("LightDirection", LightDirection);
+            shader->set("Shininess", 10.0f);
+            shader->set("Strength", 4.0f);
 
             meshes[entity.meshIndex]->bind();
             glDrawArrays(GL_TRIANGLES, 0, meshes[entity.meshIndex]->safeElementCount());
