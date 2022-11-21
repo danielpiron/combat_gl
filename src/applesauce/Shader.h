@@ -201,25 +201,25 @@ public:
         return result;
     }
 
-    void setUniform(const char *name, const glm::mat4 &matrix)
+    void set(const char *name, const glm::mat4 &matrix)
     {
         const auto loc = glGetUniformLocation(glId(), name);
         glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
     }
 
-    void setUniform(const char *name, const glm::mat3 &matrix)
+    void set(const char *name, const glm::mat3 &matrix)
     {
         const auto loc = glGetUniformLocation(glId(), name);
         glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(matrix));
     }
 
-    void setUniform(const char *name, const glm::vec3 &vector)
+    void set(const char *name, const glm::vec3 &vector)
     {
         const auto loc = glGetUniformLocation(glId(), name);
         glUniform3fv(loc, 1, glm::value_ptr(vector));
     }
 
-    void setUniform(const char *name, const glm::vec4 &vector)
+    void set(const char *name, const glm::vec4 &vector)
     {
         const auto loc = glGetUniformLocation(glId(), name);
         glUniform4fv(loc, 1, glm::value_ptr(vector));

@@ -690,12 +690,12 @@ public:
                 color = glm::vec3{1.0, 0, 0};
             }
 
-            shader->setUniform("MVPMatrix", MVPMatrix);
-            shader->setUniform("NormalMatrix", normalMatrix);
-            shader->setUniform("Color", color);
-            shader->setUniform("Ambient", glm::vec3{0.2, 0.2, 0.3});
-            shader->setUniform("LightColor", glm::vec3{1.0, 1.0, 1.0});
-            shader->setUniform("LightDirection", LightDirection);
+            shader->set("MVPMatrix", MVPMatrix);
+            shader->set("NormalMatrix", normalMatrix);
+            shader->set("Color", color);
+            shader->set("Ambient", glm::vec3{0.2, 0.2, 0.3});
+            shader->set("LightColor", glm::vec3{1.0, 1.0, 1.0});
+            shader->set("LightDirection", LightDirection);
 
             meshes[entity.meshIndex]->bind();
             glDrawArrays(GL_TRIANGLES, 0, meshes[entity.meshIndex]->safeElementCount());
