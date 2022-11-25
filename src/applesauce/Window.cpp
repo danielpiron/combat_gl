@@ -152,6 +152,11 @@ void Window::setMouseHandler(MouseHandler *handler)
     mouseHandler = handler;
 }
 
+void Window::setKeyHandler(KeyHandler *handler)
+{
+    keyHandler = handler;
+}
+
 //
 // Event dispatch
 //
@@ -181,4 +186,18 @@ void Window::dispatchMouseMoveEvent(double xpos, double ypos)
     if (mouseHandler == nullptr)
         return;
     mouseHandler->onMouseMove(xpos, ypos);
+}
+
+void Window::dispatchKeyDownEvent(int key)
+{
+    if (keyHandler == nullptr)
+        return;
+    keyHandler->onKeyDown(key);
+}
+
+void Window::dispatchKeyUpEvent(int key)
+{
+    if (keyHandler == nullptr)
+        return;
+    keyHandler->onKeyUp(key);
 }

@@ -51,7 +51,7 @@ std::ostream &operator<<(std::ostream &os, const Window::MouseHandler::Button &b
     return os;
 }
 
-class Triangles : public App, public Window::ScrollHandler, public Window::MouseHandler
+class Triangles : public App, public Window::ScrollHandler, public Window::MouseHandler, public Window::KeyHandler
 {
 public:
     struct Entity
@@ -61,6 +61,16 @@ public:
     };
 
 public:
+    void onKeyDown(int key) override
+    {
+        std::cout << "KEY DOWN: " << key << std::endl;
+    }
+
+    void onKeyUp(int key) override
+    {
+        std::cout << "KEY UP: " << key << std::endl;
+    }
+
     void onScroll(double, double yoffset) override
     {
         dist -= yoffset;
@@ -98,6 +108,7 @@ public:
     {
         window.setScrollHandler(this);
         window.setMouseHandler(this);
+        window.setKeyHandler(this);
 
         const char *vertex_shader_text = R"(
            #version 330 core

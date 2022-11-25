@@ -31,6 +31,13 @@ public:
         virtual void onMouseMove(double, double) = 0;
     };
 
+    class KeyHandler
+    {
+    public:
+        virtual void onKeyDown(int key) = 0;
+        virtual void onKeyUp(int key) = 0;
+    };
+
 private:
     static void error_callback(int error, const char *description)
     {
@@ -41,6 +48,19 @@ private:
     {
         if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
             glfwSetWindowShouldClose(window, GL_TRUE);
+
+        auto userWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
+        switch (action)
+        {
+        case GLFW_PRESS:
+            userWindow->dispatchKeyDownEvent(key);
+            break;
+        case GLFW_RELEASE:
+            userWindow->dispatchKeyUpEvent(key);
+            break;
+        default:
+            break;
+        }
     }
 
     static void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
@@ -116,16 +136,20 @@ public:
     // Event handler specification
     void setScrollHandler(ScrollHandler *handler);
     void setMouseHandler(MouseHandler *handler);
+    void setKeyHandler(KeyHandler *handler);
 
     // Event handler dispatch
     void dispatchScrollEvent(double xoffset, double yoffset);
     void dispatchMouseDownEvent(MouseHandler::Button button);
     void dispatchMouseUpEvent(MouseHandler::Button button);
     void dispatchMouseMoveEvent(double xpos, double ypos);
+    void dispatchKeyDownEvent(int key);
+    void dispatchKeyUpEvent(int key);
 
 private:
     GLFWwindow *window = nullptr;
 
     ScrollHandler *scrollHandler = nullptr;
     MouseHandler *mouseHandler = nullptr;
+    KeyHandler *keyHandler = nullptr;
 };
