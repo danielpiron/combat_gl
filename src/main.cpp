@@ -57,6 +57,7 @@ public:
     struct Entity
     {
         glm::vec3 position;
+        float angle;
         size_t meshIndex;
     };
 
@@ -64,11 +65,23 @@ public:
     void onKeyDown(int key) override
     {
         std::cout << "KEY DOWN: " << key << std::endl;
+        if (key == GLFW_KEY_A)
+        {
+            tankRotation = 0.1f;
+        }
+        else if (key == GLFW_KEY_D)
+        {
+            tankRotation = -0.1f;
+        }
     }
 
     void onKeyUp(int key) override
     {
         std::cout << "KEY UP: " << key << std::endl;
+        if (key == GLFW_KEY_A || key == GLFW_KEY_D)
+        {
+            tankRotation = 0;
+        }
     }
 
     void onScroll(double, double yoffset) override
@@ -647,12 +660,12 @@ public:
             for (const auto &character : line)
             {
                 size_t idx = character == '*' ? 1 : 0;
-                entities.push_back({{col, 0, row}, idx});
+                entities.push_back({{col, 0, row}, 0, idx});
 
                 // If there's a T also put a tank, cause why not
                 if (character == 'T')
                 {
-                    entities.push_back({{col, 0, row}, 2});
+                    entities.push_back({{col, 0, row}, 0, 2});
                 }
 
                 col++;
@@ -665,6 +678,11 @@ public:
         {
             entity.position.x -= maxCol / 2;
             entity.position.z -= row / 2;
+
+            if (entity.meshIndex == 2)
+            {
+                lastTank = &entity;
+            }
         }
     }
 
@@ -680,10 +698,16 @@ public:
                                      glm::vec3(0, 1, 0));
         glm::mat4 projection = glm::perspectiveFov(glm::radians(60.f), static_cast<float>(width), static_cast<float>(height), 0.1f, 100.0f);
 
+        if (lastTank)
+        {
+            lastTank->angle += 0.1f;
+        }
+
         for (const auto &entity : entities)
         {
-            glm::mat4 model(1.0f);
+            auto model = glm::mat4(1.0);
             model = glm::translate(model, entity.position);
+            model = glm::rotate(model, entity.angle, glm::vec3(0, 1, 0));
 
             glm::mat4 modelView = view * model;
             glm::mat3 normalMatrix = glm::mat3(modelView);
@@ -720,6 +744,9 @@ private:
     std::shared_ptr<applesauce::VertexBuffer<Vertex>> tenkBuffer;
     std::vector<std::shared_ptr<applesauce::VertexArray>> meshes;
     std::vector<Entity> entities;
+
+    Entity *lastTank = nullptr;
+    float tankRotation = 0;
 
     float pitch = 0;
     float theta = 0;
