@@ -49,3 +49,6 @@ target_include_directories(combat_gl SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/d
 target_include_directories(combat_gl SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/glm)
 # target_include_directories(combat_gl SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/libpng)
 # target_include_directories(combat_gl SYSTEM PUBLIC ${PROJECT_BINARY_DIR}/deps/libpng)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/basic.vs.glsl assets/shaders/basic.vs.glsl COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/basic.fs.glsl assets/shaders/basic.fs.glsl COPYONLY)

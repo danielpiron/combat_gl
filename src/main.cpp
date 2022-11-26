@@ -14,6 +14,8 @@
 #include <glm/vec4.hpp>
 
 #include <algorithm>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <ostream>
 #include <sstream>
@@ -25,12 +27,40 @@ struct Vertex
     glm::vec3 normal;
 };
 
-#define VERTEX_PROPERTY(I, T, M) glVertexAttribPointer(I,                                                 \
-                                                       sizeof(T::M) / sizeof(decltype(T::M)::value_type), \
-                                                       GL_FLOAT,                                          \
-                                                       GL_FALSE,                                          \
-                                                       sizeof(T),                                         \
-                                                       reinterpret_cast<void *>(offsetof(T, M)))
+std::string readFileText(const char *filename)
+{
+    std::ifstream f{filename};
+    return std::string(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
+}
+
+std::shared_ptr<Shader> loadShader(const char *name)
+{
+    static const std::string vertexShaderExt = ".vs.glsl";
+    static const std::string fragmentShaderExt = ".fs.glsl";
+
+    std::filesystem::path assetsPath = "assets/shaders";
+    std::filesystem::path vertexShaderPath = assetsPath / (std::string(name) + vertexShaderExt);
+    std::filesystem::path fragmentShaderPath = assetsPath / (std::string(name) + fragmentShaderExt);
+
+    std::cout << "Loading shader " << name << " from:\n";
+    std::cout << "\t" << vertexShaderPath << "\n";
+    std::cout << "\t" << fragmentShaderPath << std::endl;
+
+    const auto vertex_shader_text = readFileText(vertexShaderPath.c_str());
+    const auto fragment_shader_text = readFileText(fragmentShaderPath.c_str());
+
+    auto shader = std::make_shared<Shader>();
+    shader->add_vertex_stage(vertex_shader_text);
+    shader->add_fragment_stage(fragment_shader_text);
+
+    if (!shader->compile_and_link())
+    {
+        std::cerr << shader->error_log() << std::endl;
+        return nullptr;
+    }
+
+    return shader;
+}
 
 std::ostream &operator<<(std::ostream &os, const Window::MouseHandler::Button &b)
 {
@@ -124,55 +154,9 @@ public:
         window.setMouseHandler(this);
         window.setKeyHandler(this);
 
-        const char *vertex_shader_text = R"(
-           #version 330 core
-           layout (location = 0) in vec3 vPosition;
-           layout (location = 1) in vec3 vNormal;
-
-           uniform mat4 MVPMatrix;
-           uniform mat3 NormalMatrix;
-
-           out vec3 normal;
-
-           void main() {
-            normal = normalize(NormalMatrix * vNormal);
-            gl_Position = MVPMatrix * vec4(vPosition, 1);
-           })";
-
-        const char *fragment_shader_text = R"(
-        #version 330 core
-
-        uniform vec3 Color;
-        uniform vec3 Ambient;
-        uniform vec3 LightColor;
-        uniform vec3 LightDirection;
-
-        in vec3 normal;
-        out vec4 fColor;
-
-        void main() {
-            float diffuse = max(0.0, dot(normal, LightDirection));
-            vec3 scatteredLight = Ambient + LightColor * diffuse;
-
-            vec3 rgb = min(Color * scatteredLight, vec3(1.0));
-
-            fColor = vec4(rgb, 1.0);
-        }
-    )";
-
-        shader = std::make_shared<Shader>();
-
-        shader->add_vertex_stage(vertex_shader_text);
-        shader->add_fragment_stage(fragment_shader_text);
-
-        if (!shader->compile_and_link())
-        {
-            std::cerr << shader->error_log() << std::endl;
-            return;
-        }
-
-        // TODO: shader->bind(); or activateShader(shader);
-        glUseProgram(shader->glId());
+        // Loads from assets/shaders/basic.fs.glsl and assets/shaders/basic.vs.glsl
+        shader = loadShader("basic");
+        shader->use();
 
         // TODO: Move vertex data into files
         cubeBuffer = std::make_shared<applesauce::VertexBuffer<Vertex>>(std::initializer_list<Vertex>{

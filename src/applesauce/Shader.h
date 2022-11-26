@@ -225,6 +225,11 @@ public:
         glUniform4fv(loc, 1, glm::value_ptr(vector));
     }
 
+    void use() const
+    {
+        glUseProgram(glId());
+    }
+
     GLuint glId() const
     {
         return id;
