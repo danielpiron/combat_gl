@@ -78,7 +78,7 @@ TEST(App, CanReportShaderStageCompileErrors)
 
     {
         ShaderStageCompile with_errors(
-            R"(#version 330 core
+            R"(
            in vec3 vPosition;
            void main() {
             gl_Position = vPosition;
@@ -92,7 +92,7 @@ TEST(App, CanReportShaderStageCompileErrors)
 
     {
         ShaderStageCompile with_no_errors(
-            R"(#version 330 core
+            R"(
            in vec4 vPosition;
            void main() {
             gl_Position = vPosition;
@@ -138,14 +138,14 @@ TEST(App, CanReportShaderCompileErrors)
     };
 
     const char *vs_with_errors =
-        R"(#version 330 core
+        R"(
            in vec3 vPosition;
            void main() {
             gl_Position = vPosition;
            })";
 
     const char *vs_without_errors =
-        R"(#version 330 core
+        R"(
            in vec4 vPosition;
            void main() {
             gl_Position = vPosition;
@@ -158,14 +158,12 @@ TEST(App, CanReportShaderCompileErrors)
         }
     )";
     const char *fs_without_errors = R"(
-        #version 330 core
         out vec4 fColor;
         void main() {
             fColor = vec4(0.5, 0.4, 0.8, 1.0);
         }
     )";
     const char *fs_with_mismatch = R"(
-        #version 330 core
         in vec4 normal;
         out vec4 fColor;
         void main() {

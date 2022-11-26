@@ -154,7 +154,10 @@ public:
         window.setMouseHandler(this);
         window.setKeyHandler(this);
 
-        const char *vertex_shader_text = R"(
+        // shader = loadShader("basic");
+
+        const char *shader_text = R"(
+        #ifdef IS_VERTEX_SHADER
            #version 330 core
            layout (location = 0) in vec3 vPosition;
            layout (location = 1) in vec3 vNormal;
@@ -167,33 +170,33 @@ public:
            void main() {
             normal = normalize(NormalMatrix * vNormal);
             gl_Position = MVPMatrix * vec4(vPosition, 1);
-           })";
+           }
+        #endif
+        #ifdef IS_FRAGMENT_SHADER
+            #version 330 core
 
-        const char *fragment_shader_text = R"(
-        #version 330 core
+            uniform vec3 Color;
+            uniform vec3 Ambient;
+            uniform vec3 LightColor;
+            uniform vec3 LightDirection;
 
-        uniform vec3 Color;
-        uniform vec3 Ambient;
-        uniform vec3 LightColor;
-        uniform vec3 LightDirection;
+            in vec3 normal;
+            out vec4 fColor;
 
-        in vec3 normal;
-        out vec4 fColor;
+            void main() {
+                float diffuse = max(0.0, dot(normal, LightDirection));
+                vec3 scatteredLight = Ambient + LightColor * diffuse;
 
-        void main() {
-            float diffuse = max(0.0, dot(normal, LightDirection));
-            vec3 scatteredLight = Ambient + LightColor * diffuse;
+                vec3 rgb = min(Color * scatteredLight, vec3(1.0));
 
-            vec3 rgb = min(Color * scatteredLight, vec3(1.0));
-
-            fColor = vec4(rgb, 1.0);
-        }
-    )";
+                fColor = vec4(rgb, 1.0);
+            }
+        #endif)";
 
         shader = std::make_shared<Shader>();
 
-        shader->add_vertex_stage(vertex_shader_text);
-        shader->add_fragment_stage(fragment_shader_text);
+        shader->add_vertex_stage(shader_text);
+        shader->add_fragment_stage(shader_text);
 
         if (!shader->compile_and_link())
         {

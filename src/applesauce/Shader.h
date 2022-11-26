@@ -34,8 +34,11 @@ public:
     ShaderStage(const std::string &text, const Type type)
         : id(glCreateShader(glShaderEnum(type)))
     {
-        const char *source = text.c_str();
-        glShaderSource(id, 1, &source, NULL);
+        const char *source[] = {"#version 330 core\n",
+                                type == Type::fragment ? "#define IS_FRAGMENT_SHADER\n"
+                                                       : "#define IS_VERTEX_SHADER\n",
+                                text.c_str()};
+        glShaderSource(id, 3, source, NULL);
     }
     ~ShaderStage()
     {
