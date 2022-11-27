@@ -19,6 +19,7 @@ public:
     }
     virtual void init() = 0;
     virtual void display() = 0;
+    virtual void cleanUp() {}
 
     void run()
     {
@@ -53,6 +54,8 @@ private:
 
             window.swapBuffers();
         }
+
+        cleanUp();
     }
 
 protected:

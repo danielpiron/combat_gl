@@ -14,6 +14,8 @@
 #include <glm/vec4.hpp>
 
 #include <algorithm>
+#include <cstdlib>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -25,6 +27,17 @@ struct Vertex
 {
     glm::vec3 position;
     glm::vec3 normal;
+};
+
+static constexpr glm::vec3 FLOOR_COLOR = glm::vec3{1.0, 0.6, 0.1};
+static constexpr glm::vec3 WALL_COLOR = glm::vec3{0.6, 0.6, 1.0};
+
+static constexpr glm::vec3 TANK_COLORS[] = {
+    glm::vec3{0, 0, 1}, // blue
+    glm::vec3{1, 0, 0}, // red
+    glm::vec3{1, 1, 1}, // white
+    glm::vec3{1, 1, 0}, // yellow
+    glm::vec3{0, 0, 0}, // black
 };
 
 std::string readFileText(const char *filename)
@@ -90,6 +103,7 @@ public:
         glm::vec3 position;
         float angle;
         size_t meshIndex;
+        glm::vec3 color;
     };
 
 public:
@@ -150,6 +164,8 @@ public:
 
     void init() override
     {
+        srand(std::time(0));
+
         window.setScrollHandler(this);
         window.setMouseHandler(this);
         window.setKeyHandler(this);
@@ -649,12 +665,13 @@ public:
             for (const auto &character : line)
             {
                 size_t idx = character == '*' ? 1 : 0;
-                entities.push_back({{col, 0, row}, 0, idx});
+                glm::vec3 color = character == '*' ? WALL_COLOR : FLOOR_COLOR;
+                entities.push_back({{col, 0, row}, 0, idx, color});
 
                 // If there's a T also put a tank, cause why not
                 if (character == 'T')
                 {
-                    entities.push_back({{col, 0, row}, 0, 2});
+                    entities.push_back({{col, 0, row}, 0, 2, TANK_COLORS[rand() % 5]});
                 }
 
                 col++;
@@ -703,19 +720,9 @@ public:
             glm::mat4 MVPMatrix = projection * modelView;
             glm::vec3 LightDirection = normalMatrix * glm::rotateX(glm::vec3{0.0, 1.0, 0.0}, 1.0f);
 
-            glm::vec3 color = glm::vec3{1.0, 0.6, 0.1};
-            if (entity.meshIndex == 1)
-            {
-                color = glm::vec3{0.6, 0.6, 1.0};
-            }
-            else if (entity.meshIndex == 2)
-            {
-                color = glm::vec3{1.0, 0, 0};
-            }
-
             shader->set("MVPMatrix", MVPMatrix);
             shader->set("NormalMatrix", normalMatrix);
-            shader->set("Color", color);
+            shader->set("Color", entity.color);
             shader->set("Ambient", glm::vec3{0.2, 0.2, 0.3});
             shader->set("LightColor", glm::vec3{1.0, 1.0, 1.0});
             shader->set("LightDirection", LightDirection);
@@ -723,6 +730,14 @@ public:
             meshes[entity.meshIndex]->bind();
             glDrawArrays(GL_TRIANGLES, 0, meshes[entity.meshIndex]->safeElementCount());
         }
+    }
+
+    void cleanUp() override
+    {
+        std::cout << "Camera Stats:\n";
+        std::cout << "\tPitch: " << pitch << std::endl;
+        std::cout << "\tTheta: " << theta << std::endl;
+        std::cout << "\tDist: " << dist << std::endl;
     }
 
 private:
@@ -736,9 +751,9 @@ private:
     Entity *lastTank = nullptr;
     float tankRotation = 0;
 
-    float pitch = 0;
-    float theta = 0;
-    float dist = 8.0f;
+    float pitch = 0.955591;
+    float theta = 2.90973;
+    float dist = 25.1983;
 
     double last_xpos = 0;
     double last_ypos = 0;
