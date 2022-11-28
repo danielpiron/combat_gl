@@ -106,26 +106,101 @@ public:
         glm::vec3 color;
     };
 
+    class Tank
+    {
+        enum class Steer
+        {
+            neutral,
+            left,
+            right
+        };
+
+    public:
+        Tank(Entity *entity) : entity(entity) {}
+
+        void steerLeft()
+        {
+            steering = Steer::left;
+        }
+        void steerRight()
+        {
+            steering = Steer::right;
+        }
+        void releaseSteering()
+        {
+            steering = Steer::neutral;
+        }
+
+        void advance()
+        {
+            advancing = true;
+        }
+
+        void halt()
+        {
+            advancing = false;
+        }
+
+        void update()
+        {
+            static float steerRate = 0.05;
+            static float speed = 0.1;
+            switch (steering)
+            {
+            case Steer::left:
+                entity->angle += steerRate;
+                break;
+            case Steer::right:
+                entity->angle -= steerRate;
+                break;
+            case Steer::neutral:
+                break;
+            }
+
+            if (advancing)
+            {
+                glm::vec3 direction = glm::rotateY(glm::vec3{0.0, 0.0, -1.0}, entity->angle);
+                entity->position += direction * speed;
+            }
+        }
+
+    private:
+        Entity *entity;
+        Steer steering = Steer::neutral;
+        bool advancing = false;
+    };
+
 public:
     void onKeyDown(int key) override
     {
         std::cout << "KEY DOWN: " << key << std::endl;
+        if (player == nullptr)
+            return;
         if (key == GLFW_KEY_A)
         {
-            tankRotation = 0.1f;
+            player->steerLeft();
         }
         else if (key == GLFW_KEY_D)
         {
-            tankRotation = -0.1f;
+            player->steerRight();
+        }
+        else if (key == GLFW_KEY_W)
+        {
+            player->advance();
         }
     }
 
     void onKeyUp(int key) override
     {
-        std::cout << "KEY UP: " << key << std::endl;
+        if (player == nullptr)
+            return;
         if (key == GLFW_KEY_A || key == GLFW_KEY_D)
         {
-            tankRotation = 0;
+            player->releaseSteering();
+        }
+        else if (key == GLFW_KEY_W)
+        {
+            player->halt();
         }
     }
 
@@ -680,6 +755,7 @@ public:
             row++;
         }
 
+        Entity *lastTank = nullptr;
         for (auto &entity : entities)
         {
             entity.position.x -= maxCol / 2;
@@ -690,6 +766,12 @@ public:
                 lastTank = &entity;
             }
         }
+
+        if (lastTank)
+        {
+            std::cout << "Initialized player" << std::endl;
+            player = std::make_shared<Tank>(lastTank);
+        }
     }
 
     void display() override
@@ -699,14 +781,14 @@ public:
         const auto [width, height] = window.framebufferSize();
         camera.viewport = {width, height};
 
+        if (player)
+        {
+            player->update();
+        }
+
         camera.position = glm::mat3(glm::yawPitchRoll(theta, pitch, 0.0f)) * glm::vec3{0, 0, -dist};
         glm::mat4 view = camera.lookAtMatrix(glm::vec3(0));
         glm::mat4 projection = camera.projectionMatrix();
-
-        if (lastTank)
-        {
-            lastTank->angle += 0.1f;
-        }
 
         for (const auto &entity : entities)
         {
@@ -748,8 +830,7 @@ private:
     std::vector<std::shared_ptr<applesauce::VertexArray>> meshes;
     std::vector<Entity> entities;
 
-    Entity *lastTank = nullptr;
-    float tankRotation = 0;
+    std::shared_ptr<Tank> player;
 
     float pitch = 0.955591;
     float theta = 2.90973;
