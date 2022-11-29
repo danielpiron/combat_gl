@@ -33,7 +33,7 @@ static constexpr glm::vec3 FLOOR_COLOR = glm::vec3{1.0, 0.6, 0.1};
 static constexpr glm::vec3 WALL_COLOR = glm::vec3{0.6, 0.6, 1.0};
 
 static constexpr float MAX_DIST = 25.0f;
-static constexpr float MIN_DIST = 10.0f;
+static constexpr float MIN_DIST = 8.0f;
 
 static size_t nextTankColor = 0;
 static constexpr glm::vec3 TANK_COLORS[] = {
@@ -1267,7 +1267,11 @@ public:
         cameraVelocity += -cameraVelocity * .1f;
         cameraTarget += cameraVelocity;
 
-        dist = MIN_DIST + (MAX_DIST - MIN_DIST) * (tankDist / 25.0f);
+        float distTarget = MIN_DIST + (MAX_DIST - MIN_DIST) * (tankDist / 25.0f);
+        distVelocity += (distTarget - dist) * .005;
+
+        distVelocity += -distVelocity * .1f;
+        dist += distVelocity;
 
         camera.position = glm::mat3(glm::yawPitchRoll(theta, pitch, 0.0f)) * glm::vec3{0, 0, -dist};
         glm::mat4 view = camera.lookAtMatrix(cameraTarget);
@@ -1319,6 +1323,7 @@ private:
     float pitch = 0.955591;
     float theta = 2.90973;
     float dist = 25.1983;
+    float distVelocity = 0;
 
     double last_xpos = 0;
     double last_ypos = 0;
