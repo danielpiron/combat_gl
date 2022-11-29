@@ -1277,7 +1277,7 @@ public:
         glm::mat4 view = camera.lookAtMatrix(cameraTarget);
         glm::mat4 projection = camera.projectionMatrix();
 
-        glm::vec3 LightDirection = glm::mat3(view) * glm::rotateX(glm::vec3{0.0, 1.0, 0.0}, 1.0f);
+        glm::vec3 LightDirection = glm::mat3(view) * glm::rotateX(glm::vec3{0.0, 1.0, 0.0}, -0.5f);
 
         for (const auto &entity : entities)
         {
@@ -1291,9 +1291,10 @@ public:
             glm::mat4 MVPMatrix = projection * modelView;
 
             shader->set("MVPMatrix", MVPMatrix);
+            shader->set("ModelViewMatrix", modelView);
             shader->set("NormalMatrix", normalMatrix);
             shader->set("Color", entity.color);
-            shader->set("Ambient", glm::vec3{0.2, 0.2, 0.3});
+            shader->set("Ambient", glm::vec3{0.3, 0.3, 0.4});
             shader->set("LightColor", glm::vec3{1.0, 1.0, 1.0});
             shader->set("LightDirection", LightDirection);
 

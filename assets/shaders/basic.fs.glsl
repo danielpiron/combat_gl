@@ -6,13 +6,20 @@ uniform vec3 LightColor;
 uniform vec3 LightDirection;
 
 in vec3 normal;
+in vec3 position;
 out vec4 fColor;
 
 void main() {
     float diffuse = max(0.0, dot(normal, LightDirection));
     vec3 scatteredLight = Ambient + LightColor * diffuse;
 
-    vec3 rgb = min(Color * scatteredLight, vec3(1.0));
+    vec3 viewDir = normalize(-position);
+    vec3 reflectDir = reflect(-LightDirection, normal);
+
+    float specular = pow(max(dot(viewDir, reflectDir), 0.0), 16);
+    vec3 reflectedLight = 0.25 * specular * LightColor;
+
+    vec3 rgb = min(Color * scatteredLight + reflectedLight, vec3(1.0));
 
     fColor = vec4(rgb, 1.0);
 }
