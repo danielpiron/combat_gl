@@ -32,6 +32,9 @@ struct Vertex
 static constexpr glm::vec3 FLOOR_COLOR = glm::vec3{1.0, 0.6, 0.1};
 static constexpr glm::vec3 WALL_COLOR = glm::vec3{0.6, 0.6, 1.0};
 
+static constexpr float MAX_DIST = 25.0f;
+static constexpr float MIN_DIST = 10.0f;
+
 static size_t nextTankColor = 0;
 static constexpr glm::vec3 TANK_COLORS[] = {
     glm::vec3{0, 0, 1}, // blue
@@ -130,6 +133,11 @@ public:
         void releaseSteering()
         {
             steering = Steer::neutral;
+        }
+
+        const glm::vec3 position() const
+        {
+            return entity->position;
         }
 
         void advance()
@@ -1250,8 +1258,19 @@ public:
             player->update();
         }
 
+        glm::vec3 midPoint = (players[0]->position() + players[1]->position()) / 2.0f;
+        float tankDist = glm::distance(players[0]->position(), players[1]->position());
+
+        glm::vec3 movementDirection = midPoint - cameraTarget;
+        cameraVelocity += movementDirection * .001f;
+
+        cameraVelocity += -cameraVelocity * .1f;
+        cameraTarget += cameraVelocity;
+
+        dist = MIN_DIST + (MAX_DIST - MIN_DIST) * (tankDist / 25.0f);
+
         camera.position = glm::mat3(glm::yawPitchRoll(theta, pitch, 0.0f)) * glm::vec3{0, 0, -dist};
-        glm::mat4 view = camera.lookAtMatrix(glm::vec3(0));
+        glm::mat4 view = camera.lookAtMatrix(cameraTarget);
         glm::mat4 projection = camera.projectionMatrix();
 
         glm::vec3 LightDirection = glm::mat3(view) * glm::rotateX(glm::vec3{0.0, 1.0, 0.0}, 1.0f);
@@ -1305,6 +1324,8 @@ private:
     double last_ypos = 0;
     bool move_camera = false;
     Camera camera;
+    glm::vec3 cameraTarget{0};
+    glm::vec3 cameraVelocity{0};
 };
 
 int main()
