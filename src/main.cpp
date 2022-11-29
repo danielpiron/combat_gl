@@ -175,33 +175,33 @@ public:
     void onKeyDown(int key) override
     {
         std::cout << "KEY DOWN: " << key << std::endl;
-        if (player == nullptr)
+        if (players.size() < 2 || players[1] == nullptr)
             return;
         if (key == GLFW_KEY_A)
         {
-            player->steerLeft();
+            players[1]->steerLeft();
         }
         else if (key == GLFW_KEY_D)
         {
-            player->steerRight();
+            players[1]->steerRight();
         }
         else if (key == GLFW_KEY_W)
         {
-            player->advance();
+            players[1]->advance();
         }
     }
 
     void onKeyUp(int key) override
     {
-        if (player == nullptr)
+        if (players.size() < 2 || players[1] == nullptr)
             return;
         if (key == GLFW_KEY_A || key == GLFW_KEY_D)
         {
-            player->releaseSteering();
+            players[1]->releaseSteering();
         }
         else if (key == GLFW_KEY_W)
         {
-            player->halt();
+            players[1]->halt();
         }
     }
 
@@ -1226,7 +1226,6 @@ public:
             row++;
         }
 
-        Entity *lastTank = nullptr;
         for (auto &entity : entities)
         {
             entity.position.x -= maxCol / 2;
@@ -1234,14 +1233,8 @@ public:
 
             if (entity.meshIndex == 2)
             {
-                lastTank = &entity;
+                players.emplace_back(std::make_shared<Tank>(&entity));
             }
-        }
-
-        if (lastTank)
-        {
-            std::cout << "Initialized player" << std::endl;
-            player = std::make_shared<Tank>(lastTank);
         }
     }
 
@@ -1252,7 +1245,7 @@ public:
         const auto [width, height] = window.framebufferSize();
         camera.viewport = {width, height};
 
-        if (player)
+        for (auto &player : players)
         {
             player->update();
         }
@@ -1302,7 +1295,7 @@ private:
     std::vector<std::shared_ptr<applesauce::VertexArray>> meshes;
     std::vector<Entity> entities;
 
-    std::shared_ptr<Tank> player;
+    std::vector<std::shared_ptr<Tank>> players;
 
     float pitch = 0.955591;
     float theta = 2.90973;
