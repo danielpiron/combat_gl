@@ -183,17 +183,30 @@ public:
     void onKeyDown(int key) override
     {
         std::cout << "KEY DOWN: " << key << std::endl;
-        if (players.size() < 2 || players[1] == nullptr)
+        if (players.size() < 2 || players[0] == nullptr || players[1] == nullptr)
             return;
         if (key == GLFW_KEY_A)
         {
-            players[1]->steerLeft();
+            players[0]->steerLeft();
         }
         else if (key == GLFW_KEY_D)
         {
-            players[1]->steerRight();
+            players[0]->steerRight();
         }
         else if (key == GLFW_KEY_W)
+        {
+            players[0]->advance();
+        }
+
+        if (key == GLFW_KEY_LEFT)
+        {
+            players[1]->steerLeft();
+        }
+        else if (key == GLFW_KEY_RIGHT)
+        {
+            players[1]->steerRight();
+        }
+        else if (key == GLFW_KEY_UP)
         {
             players[1]->advance();
         }
@@ -201,13 +214,22 @@ public:
 
     void onKeyUp(int key) override
     {
-        if (players.size() < 2 || players[1] == nullptr)
+        if (players.size() < 2 || players[0] == nullptr || players[1] == nullptr)
             return;
+
         if (key == GLFW_KEY_A || key == GLFW_KEY_D)
+        {
+            players[0]->releaseSteering();
+        }
+        else if (key == GLFW_KEY_W)
+        {
+            players[0]->halt();
+        }
+        if (key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT)
         {
             players[1]->releaseSteering();
         }
-        else if (key == GLFW_KEY_W)
+        else if (key == GLFW_KEY_UP)
         {
             players[1]->halt();
         }
