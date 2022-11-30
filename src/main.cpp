@@ -1322,6 +1322,9 @@ public:
         glm::vec3 lightDir = glm::mat3(glm::yawPitchRoll(lightTheta, lightPitch, 0.0f)) * glm::vec3{0, 0, -1.0};
         glm::vec3 LightDirection = glm::mat3(view) * lightDir;
 
+        static float specularPower = 32.0f;
+        static float specularStrength = 1.0f;
+
         for (const auto &entity : entities)
         {
             auto model = glm::mat4(1.0);
@@ -1340,6 +1343,8 @@ public:
             shader->set("Ambient", ambient);
             shader->set("LightColor", glm::vec3{1.0, 1.0, 1.0});
             shader->set("LightDirection", LightDirection);
+            shader->set("SpecularPower", specularPower);
+            shader->set("SpecularStrength", specularStrength);
 
             meshes[entity.meshIndex]->bind();
             glDrawArrays(GL_TRIANGLES, 0, meshes[entity.meshIndex]->safeElementCount());
@@ -1356,6 +1361,9 @@ public:
 
         ImGui::SliderFloat("lightPitch", &lightPitch, 0, M_PI);
         ImGui::SliderFloat("lightTheta", &lightTheta, 0, M_PI * 2);
+
+        ImGui::SliderFloat("SpecularPower", &specularPower, 0.0f, 256.0f);
+        ImGui::SliderFloat("SpecularStrength", &specularStrength, 0.0f, 1.0f);
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();

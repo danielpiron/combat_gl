@@ -225,6 +225,12 @@ public:
         glUniform4fv(loc, 1, glm::value_ptr(vector));
     }
 
+    void set(const char *name, const float value)
+    {
+        const auto loc = glGetUniformLocation(glId(), name);
+        glUniform1f(loc, value);
+    }
+
     void use() const
     {
         glUseProgram(glId());

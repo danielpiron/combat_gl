@@ -5,6 +5,9 @@ uniform vec3 Ambient;
 uniform vec3 LightColor;
 uniform vec3 LightDirection;
 
+uniform float SpecularPower;
+uniform float SpecularStrength;
+
 in vec3 normal;
 in vec3 position;
 out vec4 fColor;
@@ -16,8 +19,8 @@ void main() {
     vec3 viewDir = normalize(-position);
     vec3 reflectDir = reflect(-LightDirection, normal);
 
-    float specular = pow(max(dot(viewDir, reflectDir), 0.0), 16);
-    vec3 reflectedLight = 0.25 * specular * LightColor;
+    float specular = pow(max(dot(viewDir, reflectDir), 0.0), SpecularPower);
+    vec3 reflectedLight = SpecularStrength * specular * LightColor;
 
     vec3 rgb = min(Color * scatteredLight + reflectedLight, vec3(1.0));
 
