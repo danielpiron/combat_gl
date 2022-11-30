@@ -1316,7 +1316,11 @@ public:
         glm::mat4 view = camera.lookAtMatrix(cameraTarget);
         glm::mat4 projection = camera.projectionMatrix();
 
-        glm::vec3 LightDirection = glm::mat3(view) * glm::rotateX(glm::vec3{0.0, 1.0, 0.0}, -0.5f);
+        static float lightPitch = M_PI / 2;
+        static float lightTheta = 0;
+
+        glm::vec3 lightDir = glm::mat3(glm::yawPitchRoll(lightTheta, lightPitch, 0.0f)) * glm::vec3{0, 0, -1.0};
+        glm::vec3 LightDirection = glm::mat3(view) * lightDir;
 
         for (const auto &entity : entities)
         {
@@ -1350,7 +1354,9 @@ public:
 
         ImGui::ColorEdit3("ambient", (float *)&ambient[0]);
 
-        ImGui::SameLine();
+        ImGui::SliderFloat("lightPitch", &lightPitch, 0, M_PI);
+        ImGui::SliderFloat("lightTheta", &lightTheta, 0, M_PI * 2);
+
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
 
