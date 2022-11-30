@@ -4,6 +4,10 @@
 #include "applesauce/Shader.h"
 #include "applesauce/Camera.h"
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #define GLM_SWIZZLE
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
@@ -270,6 +274,19 @@ public:
 
     void init() override
     {
+
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO &io = ImGui::GetIO();
+        (void)io;
+
+        ImGui::StyleColorsDark();
+
+        const char *glsl_version = "#version 150";
+
+        ImGui_ImplGlfw_InitForOpenGL(window.glfwWindow(), true);
+        ImGui_ImplOpenGL3_Init(glsl_version);
+
         srand(std::time(0));
 
         window.setScrollHandler(this);
@@ -1316,13 +1333,29 @@ public:
             shader->set("ModelViewMatrix", modelView);
             shader->set("NormalMatrix", normalMatrix);
             shader->set("Color", entity.color);
-            shader->set("Ambient", glm::vec3{0.3, 0.3, 0.4});
+            shader->set("Ambient", ambient);
             shader->set("LightColor", glm::vec3{1.0, 1.0, 1.0});
             shader->set("LightDirection", LightDirection);
 
             meshes[entity.meshIndex]->bind();
             glDrawArrays(GL_TRIANGLES, 0, meshes[entity.meshIndex]->safeElementCount());
         }
+
+        // GUI tuff
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("Adjustment");
+
+        ImGui::ColorEdit3("ambient", (float *)&ambient[0]);
+
+        ImGui::SameLine();
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 
     void cleanUp() override
@@ -1354,6 +1387,8 @@ private:
     Camera camera;
     glm::vec3 cameraTarget{0};
     glm::vec3 cameraVelocity{0};
+
+    glm::vec3 ambient{0.3, 0.3, 0.4};
 };
 
 int main()

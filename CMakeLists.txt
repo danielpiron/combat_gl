@@ -24,6 +24,18 @@ add_subdirectory(deps/glfw)
 add_subdirectory(deps/glad)
 add_subdirectory(deps/glm)
 
+
+#
+# Begins: IMGUI Integration
+#
+set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/imgui)
+set(IMGUI_SOURCES ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
+                  ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp)
+#
+# Ends: IMGUI Integration
+#
+
+
 # if(MSVC)
 #     add_subdirectory(deps/zlib)
 #     set(PNG_BUILD_ZLIB ON)
@@ -35,7 +47,7 @@ add_subdirectory(deps/glm)
 # add_subdirectory(deps/libpng)
 
 
-add_executable(combat_gl src/main.cpp ${APPLESAUCE_FILES})
+add_executable(combat_gl src/main.cpp ${APPLESAUCE_FILES} ${IMGUI_SOURCES})
 target_link_libraries(combat_gl
  glfw
  glad
@@ -47,6 +59,8 @@ target_include_directories(combat_gl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(combat_gl SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw/include)
 target_include_directories(combat_gl SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/glad/include)
 target_include_directories(combat_gl SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/glm)
+target_include_directories(combat_gl SYSTEM PUBLIC ${IMGUI_DIR})
+target_include_directories(combat_gl SYSTEM PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/backends)
 # target_include_directories(combat_gl SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/libpng)
 # target_include_directories(combat_gl SYSTEM PUBLIC ${PROJECT_BINARY_DIR}/deps/libpng)
 

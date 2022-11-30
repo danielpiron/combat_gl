@@ -146,6 +146,8 @@ public:
     void dispatchKeyDownEvent(int key);
     void dispatchKeyUpEvent(int key);
 
+    GLFWwindow *glfwWindow() const { return window; }
+
 private:
     GLFWwindow *window = nullptr;
 
