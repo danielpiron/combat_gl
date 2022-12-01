@@ -36,7 +36,7 @@ struct Vertex
 static constexpr glm::vec3 FLOOR_COLOR = glm::vec3{1.0, 0.6, 0.1};
 static constexpr glm::vec3 WALL_COLOR = glm::vec3{0.6, 0.6, 1.0};
 
-static constexpr float MAX_DIST = 25.0f;
+static float MAX_DIST = 25.0f;
 static constexpr float MIN_DIST = 8.0f;
 
 static size_t nextTankColor = 0;
@@ -1364,6 +1364,9 @@ public:
 
         ImGui::SliderFloat("SpecularPower", &specularPower, 0.0f, 256.0f);
         ImGui::SliderFloat("SpecularStrength", &specularStrength, 0.0f, 1.0f);
+
+        ImGui::SliderFloat("camera.FOV", &camera.fieldOfVision, 0.1f, 120.0f);
+        ImGui::SliderFloat("MAX DIST.FOV", &MAX_DIST, 0.1f, 120.0f);
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
