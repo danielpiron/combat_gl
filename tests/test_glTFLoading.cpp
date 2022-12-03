@@ -293,7 +293,6 @@ TEST(glTFLoader, CanParseBufferViews)
 			"bufferViews": [
 			  {
 				"buffer": 0,
-				"byteOffset": 0,
 				"byteLength": 6,
 				"target": 34963
               },
