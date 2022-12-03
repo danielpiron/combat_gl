@@ -158,6 +158,26 @@ struct glTF
 	};
 
 public:
+	struct Buffer
+	{
+		std::string uri;
+		int byteLength;
+
+		bool operator==(const Buffer &rhs) const
+		{
+			return uri == rhs.uri && byteLength == rhs.byteLength;
+		}
+
+		std::vector<uint8_t> getBytes() const
+		{
+			std::vector<uint8_t> result(byteLength);
+			std::string base64String = uri.substr(uri.find(',') + 1);
+
+			decodeBase64(base64String.c_str(), reinterpret_cast<char *>(&result[0]), base64String.length());
+			return result;
+		}
+	};
+
 	struct BufferView
 	{
 		int buffer;
@@ -175,6 +195,7 @@ public:
 public:
 	Asset asset;
 	std::vector<BufferView> bufferViews;
+	std::vector<Buffer> buffers;
 };
 
 void from_json(const nlohmann::json &j, glTF::Asset::Version &v)
@@ -185,6 +206,12 @@ void from_json(const nlohmann::json &j, glTF::Asset::Version &v)
 void from_json(const nlohmann::json &j, glTF::Asset &a)
 {
 	j.at("version").get_to(a.version);
+}
+
+void from_json(const nlohmann::json &j, glTF::Buffer &b)
+{
+	j.at("uri").get_to(b.uri);
+	j.at("byteLength").get_to(b.byteLength);
 }
 
 void from_json(const nlohmann::json &j, glTF::BufferView &bv)
@@ -201,6 +228,10 @@ void from_json(const nlohmann::json &j, glTF &gltf)
 	if (j.count("bufferViews"))
 	{
 		j.at("bufferViews").get_to(gltf.bufferViews);
+	}
+	if (j.count("buffers"))
+	{
+		j.at("buffers").get_to(gltf.buffers);
 	}
 }
 
@@ -249,4 +280,69 @@ TEST(glTFLoader, CanParseBufferViews)
 	ASSERT_EQ(2, gltf.bufferViews.size());
 	EXPECT_EQ(firstView, gltf.bufferViews[0]);
 	EXPECT_EQ(secondView, gltf.bufferViews[1]);
+}
+
+TEST(glTFLoader, CanParseBuffers)
+{
+	const char *buffers = R"({
+			"asset": { "version": "2.0" }, 
+			"buffers" : [
+				{
+				"uri" : "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA=",
+				"byteLength" : 44
+				}
+			]
+		  })";
+	auto gltf = glTFFromString(buffers);
+
+	glTF::Buffer expectedBuffer{"data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA=", 44};
+	std::vector<uint8_t> expectedRawBuffer{
+		0x00,
+		0x00,
+		0x01,
+		0x00,
+		0x02,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x80,
+		0x3f,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x00,
+		0x80,
+		0x3f,
+		0x00,
+		0x00,
+		0x00,
+		0x00};
+
+	ASSERT_EQ(1, gltf.buffers.size());
+	EXPECT_EQ(expectedBuffer, gltf.buffers[0]);
+	EXPECT_EQ(expectedRawBuffer, gltf.buffers[0].getBytes());
 }
