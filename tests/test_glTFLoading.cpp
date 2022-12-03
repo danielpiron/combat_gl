@@ -180,15 +180,38 @@ public:
 
 	struct BufferView
 	{
+		enum class Target
+		{
+			none,
+			array_buffer,
+			element_array_buffer,
+		};
+
+		static Target decodeTarget(int code)
+		{
+			switch (code)
+			{
+			case 34962:
+				return Target::array_buffer;
+			case 34963:
+				return Target::element_array_buffer;
+			default:
+				return Target::none;
+			}
+		}
+
 		int buffer;
 		int byteOffset;
 		int byteLength;
-		int target;
+		int byteStride;
+		Target target;
+		std::string name;
 
 		bool operator==(const BufferView &rhs) const
 		{
 			return buffer == rhs.buffer && byteOffset == rhs.byteOffset &&
-				   byteLength == rhs.byteLength && target == rhs.target;
+				   byteLength == rhs.byteLength && byteStride == rhs.byteStride &&
+				   target == rhs.target && name == rhs.name;
 		}
 	};
 
@@ -217,9 +240,19 @@ void from_json(const nlohmann::json &j, glTF::Buffer &b)
 void from_json(const nlohmann::json &j, glTF::BufferView &bv)
 {
 	j.at("buffer").get_to(bv.buffer);
-	j.at("byteOffset").get_to(bv.byteOffset);
 	j.at("byteLength").get_to(bv.byteLength);
-	j.at("target").get_to(bv.target);
+
+	if (j.count("byteOffset"))
+		j.at("byteOffset").get_to(bv.byteOffset);
+
+	if (j.count("byteStride"))
+		j.at("byteStride").get_to(bv.byteStride);
+
+	if (j.count("name"))
+		j.at("name").get_to(bv.name);
+
+	if (j.count("target"))
+		bv.target = glTF::BufferView::decodeTarget(j.at("target").get<int>());
 }
 
 void from_json(const nlohmann::json &j, glTF &gltf)
@@ -268,14 +301,16 @@ TEST(glTFLoader, CanParseBufferViews)
 			    "buffer": 0,
 			    "byteOffset": 8,
 			    "byteLength": 36,
-			    "target": 34962
+				"byteStride": 12,
+			    "target": 34962,
+				"name": "test"
 			  }
 		    ]
 		  })";
 	auto gltf = glTFFromString(bufferViews);
 
-	glTF::BufferView firstView{0, 0, 6, 34963};
-	glTF::BufferView secondView{0, 8, 36, 34962};
+	glTF::BufferView firstView{0, 0, 6, 0, glTF::BufferView::Target::element_array_buffer, ""};
+	glTF::BufferView secondView{0, 8, 36, 12, glTF::BufferView::Target::array_buffer, "test"};
 
 	ASSERT_EQ(2, gltf.bufferViews.size());
 	EXPECT_EQ(firstView, gltf.bufferViews[0]);
