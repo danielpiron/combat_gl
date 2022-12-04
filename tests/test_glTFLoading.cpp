@@ -175,9 +175,10 @@ TEST(glTFLoader, CanParseMeshes)
 					{"POSITION", 0},
 					{"NORMAL", 1},
 					{"TEXCOORD_0", 2},
-				}, // attributes
-				3, // indices
-				0, // material
+				},										// attributes
+				3,										// indices
+				0,										// material
+				glTF::Mesh::Primitive::Mode::TRIANGLES, // mode
 			}},
 	}};
 

@@ -104,6 +104,11 @@ void from_json(const nlohmann::json &j, glTF::Mesh::Primitive &mp)
     j.at("attributes").get_to(mp.attributes);
     j.at("indices").get_to(mp.indices);
     j.at("material").get_to(mp.material);
+
+    if (j.count("mode"))
+        j.at("mode").get_to(mp.mode);
+    else
+        mp.mode = glTF::Mesh::Primitive::Mode::TRIANGLES;
 }
 
 void from_json(const nlohmann::json &j, glTF::Mesh &m)

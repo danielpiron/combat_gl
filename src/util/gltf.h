@@ -147,14 +147,26 @@ public:
     {
         struct Primitive
         {
+            enum class Mode
+            {
+                POINTS = 0,
+                LINES,
+                LINE_LOOP,
+                LINE_STRIP,
+                TRIANGLES,
+                TRIANGLE_STRIP,
+                TRIANGLE_FAN
+            };
+
             using Attributes = std::unordered_map<std::string, int>;
             Attributes attributes;
             int indices;
             int material;
+            Mode mode;
 
             bool operator==(const Primitive &rhs) const
             {
-                return attributes == rhs.attributes && indices == rhs.indices && material == rhs.material;
+                return attributes == rhs.attributes && indices == rhs.indices && material == rhs.material && mode == rhs.mode;
             }
         };
 
