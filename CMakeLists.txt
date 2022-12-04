@@ -51,6 +51,7 @@ add_executable(combat_gl src/main.cpp ${APPLESAUCE_FILES} ${IMGUI_SOURCES})
 target_link_libraries(combat_gl
  glfw
  glad
+ nlohmann_json
 # png_static
  )
 
