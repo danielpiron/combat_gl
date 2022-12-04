@@ -6,6 +6,8 @@
 #include <glm/vec3.hpp>
 #include <glm/vec2.hpp>
 
+#include <cinttypes>
+
 class AppleSauceBuffer : public AppleSauceTest
 {
 };
@@ -50,6 +52,23 @@ TEST_F(AppleSauceBuffer, CanBeMappedToVertexPointer)
     EXPECT_EQ(result[0], data[0]);
     EXPECT_EQ(result[1], data[1]);
     EXPECT_EQ(result[2], data[2]);
+}
+
+TEST_F(AppleSauceBuffer, CanInitializeWithGenericData)
+{
+    const uint8_t expectedData[] = {0XDE, 0xAD, 0xBE, 0xEF};
+
+    applesauce::Buffer buffer(expectedData, 4);
+
+    buffer.bindTo(applesauce::Buffer::Target::vertex_array);
+
+    uint8_t result[4];
+    glGetBufferSubData(GL_ARRAY_BUFFER, 0, 4, &result);
+
+    EXPECT_EQ(expectedData[0], result[0]);
+    EXPECT_EQ(expectedData[1], result[1]);
+    EXPECT_EQ(expectedData[2], result[2]);
+    EXPECT_EQ(expectedData[3], result[3]);
 }
 
 TEST_F(AppleSauceBuffer, CanUnbindToBuffer0)

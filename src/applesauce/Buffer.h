@@ -41,7 +41,15 @@ namespace applesauce
     public:
         enum class Type
         {
+            none,
             vertex,
+        };
+
+        enum class Target
+        {
+            none,
+            vertex_array,
+            element_array,
         };
 
     private:
@@ -63,6 +71,19 @@ namespace applesauce
             }
         }
 
+        static GLenum getGlTarget(Target target)
+        {
+            switch (target)
+            {
+            case Target::vertex_array:
+                return GL_ARRAY_BUFFER;
+            case Target::element_array:
+                return GL_ELEMENT_ARRAY_BUFFER;
+            default:
+                return 0;
+            }
+        }
+
     public:
         Buffer(size_t size, Type type, size_t elementSize = 1)
             : GLResource(genGlBuffer()), _target(getGlTarget(type)), _size(size), _elementSize(elementSize)
@@ -70,6 +91,19 @@ namespace applesauce
             bind();
             glBufferData(_target, size, nullptr, GL_STATIC_DRAW);
             unbind();
+        }
+
+        Buffer(const void *data, size_t size)
+            : GLResource(genGlBuffer()), _target(0), _size(size), _elementSize(1)
+        {
+            glBindBuffer(GL_COPY_WRITE_BUFFER, glId());
+            glBufferData(GL_COPY_WRITE_BUFFER, size, data, GL_STATIC_DRAW);
+            glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+        }
+
+        void bindTo(Target target)
+        {
+            glBindBuffer(getGlTarget(target), glId());
         }
 
         void bind() const
