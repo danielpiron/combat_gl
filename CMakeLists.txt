@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS False)
 
-file(GLOB APPLESAUCE_FILES src/applesauce/*.cpp)
+file(GLOB APPLESAUCE_FILES src/applesauce/*.cpp src/util/*.cpp)
 
 add_subdirectory(tests)
 

@@ -2,123 +2,12 @@
 
 #include <nlohmann/json.hpp>
 
+#include <util/base64.h>
+
 #include <cstring>
 #include <string>
 #include <vector>
 #include <unordered_map>
-
-int base64CharacterValue(char c)
-{
-	if (c >= 'A' && c <= 'Z')
-	{
-		return c - 'A';
-	}
-	else if (c >= 'a' && c <= 'z')
-	{
-		return c - 'a' + 26;
-	}
-	else if (c >= '0' && c <= '9')
-	{
-		return c - '0' + 52;
-	}
-	else if (c == '+')
-	{
-		return 62;
-	}
-	else if (c == '/')
-	{
-		return 63;
-	}
-	return -1;
-}
-
-int decodeBase64Chunk(const char *base64Input, char *output)
-{
-	int base64Values[] = {-1, -1, -1, -1};
-
-	for (size_t i = 0; i < 4; ++i)
-	{
-		base64Values[i] = base64CharacterValue(base64Input[i]);
-	}
-
-	int decodedChars = 1;
-	output[0] = base64Values[0] << 2 | base64Values[1] >> 4;
-
-	if (base64Values[2] != -1)
-	{
-		output[1] = (base64Values[1] & 0x0F) << 4 | base64Values[2] >> 2;
-		decodedChars++;
-	}
-	if (base64Values[3] != -1)
-	{
-		output[2] = base64Values[2] << 6 | base64Values[3];
-		decodedChars++;
-	}
-
-	return decodedChars;
-}
-
-int decodeBase64(const char *base64Input, char *output, size_t len)
-{
-	int totalBytesDecoded = 0;
-	while (len > 0)
-	{
-		int bytesDecoded = decodeBase64Chunk(base64Input, output);
-		output += bytesDecoded;
-		base64Input += 4;
-		totalBytesDecoded += bytesDecoded;
-		len -= 4;
-	}
-	return totalBytesDecoded;
-}
-
-TEST(Base64, CanDecodeThreeCharacters)
-{
-	const char *expected = "Man";
-	const char base64String[] = {'T', 'W', 'F', 'u'};
-
-	char decodedBuffer[4];
-	std::memset(decodedBuffer, 0, 4);
-
-	EXPECT_EQ(3, decodeBase64(base64String, decodedBuffer, 4));
-	EXPECT_STREQ(expected, decodedBuffer);
-}
-
-TEST(Base64, CanDecodeCharactersWithPadding)
-{
-	const char *expected = "Ma";
-	const char base64String[] = {'T', 'W', 'E', '='};
-
-	char decodedBuffer[4];
-	std::memset(decodedBuffer, 0, 4);
-
-	EXPECT_EQ(2, decodeBase64(base64String, decodedBuffer, 4));
-	EXPECT_STREQ(expected, decodedBuffer);
-}
-
-TEST(Base64, CanDecodeSingleCharacterWithPadding)
-{
-	const char *expected = "M";
-	const char base64String[] = {'T', 'Q', '=', '='};
-
-	char decodedBuffer[4];
-	std::memset(decodedBuffer, 0, 4);
-
-	EXPECT_EQ(1, decodeBase64(base64String, decodedBuffer, 4));
-	EXPECT_STREQ(expected, decodedBuffer);
-}
-
-TEST(Base64, CanDecodeArbitrarilyLongSequence)
-{
-	const char *expected = "light work.";
-	const char *base64String = "bGlnaHQgd29yay4=";
-
-	char decodedBuffer[12];
-	std::memset(decodedBuffer, 0, 12);
-
-	EXPECT_EQ(11, decodeBase64(base64String, decodedBuffer, 16));
-	EXPECT_STREQ(expected, decodedBuffer);
-}
 
 struct glTF
 {
