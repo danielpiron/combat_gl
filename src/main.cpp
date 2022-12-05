@@ -38,7 +38,7 @@ struct Vertex
 static constexpr glm::vec3 FLOOR_COLOR = glm::vec3{1.0, 0.6, 0.1};
 static constexpr glm::vec3 WALL_COLOR = glm::vec3{0.6, 0.6, 1.0};
 
-static float MAX_DIST = 25.0f;
+static float MAX_DIST = 30.0f;
 static constexpr float MIN_DIST = 8.0f;
 
 static size_t nextTankColor = 0;
@@ -239,8 +239,8 @@ public:
 
         void update()
         {
-            static float steerRate = 0.05;
-            static float speed = 0.1;
+            static float steerRate = 0.03;
+            static float speed = 0.06;
             switch (steering)
             {
             case Steer::left:
@@ -450,6 +450,7 @@ public:
                 players.emplace_back(std::make_shared<Tank>(&entity));
             }
         }
+        camera.fieldOfVision = 42.0f;
     }
 
     void display() override
