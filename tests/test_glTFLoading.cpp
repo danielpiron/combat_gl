@@ -141,6 +141,8 @@ TEST(glTFLoader, CanParseAccessor)
 	};
 
 	EXPECT_EQ(expectedAccessors, gltf.accessors);
+	EXPECT_EQ(1, gltf.accessors[0].componentCount());
+	EXPECT_EQ(3, gltf.accessors[1].componentCount());
 }
 
 TEST(glTFLoader, CanParseMeshes)

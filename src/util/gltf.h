@@ -84,6 +84,29 @@ public:
                    componentType == rhs.componentType && normalized == rhs.normalized &&
                    count == rhs.count && type == rhs.type;
         }
+
+        int componentCount() const
+        {
+            switch (type)
+            {
+            case Type::SCALAR:
+                return 1;
+            case Type::VEC2:
+                return 2;
+            case Type::VEC3:
+                return 3;
+            case Type::VEC4:
+                return 4;
+            case Type::MAT2:
+                return 8;
+            case Type::MAT3:
+                return 9;
+            case Type::MAT4:
+                return 16;
+            default:
+                return 0;
+            }
+        }
     };
 
     struct Buffer

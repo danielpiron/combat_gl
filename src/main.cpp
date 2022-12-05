@@ -113,6 +113,25 @@ struct Mesh
     int elementArrayByteOffset;
 };
 
+/*
+static applesauce::VertexAttribute vertexAttribFromName(const std::string &name)
+{
+    if (name == "POSITION")
+    {
+        return applesauce::VertexAttribute::position;
+    }
+    else if (name == "NORMAL")
+    {
+        return applesauce::VertexAttribute::normal;
+    }
+    else if (name == "TEXCOORD_0")
+    {
+        return applesauce::VertexAttribute::texcoord;
+    }
+    return applesauce::VertexAttribute::position;
+}
+*/
+
 std::unordered_map<std::string, Mesh> loadMeshes(const char *filename)
 {
     std::unordered_map<std::string, Mesh> result;
@@ -125,6 +144,33 @@ std::unordered_map<std::string, Mesh> loadMeshes(const char *filename)
     for (const auto &gltfBuffer : gltf.buffers)
     {
         buffers.emplace_back(std::make_shared<applesauce::Buffer>(&gltfBuffer.getBytes()[0], gltfBuffer.byteLength));
+    }
+
+    for (const auto &gltfMesh : gltf.meshes)
+    {
+
+        for (const auto &gltfMeshPrimitive : gltfMesh.primitives)
+        {
+            auto vertexArray = std::make_shared<applesauce::VertexArray>();
+            for (const auto &[accessorName, accessorIndex] : gltfMeshPrimitive.attributes)
+            {
+                (void)accessorIndex;
+                (void)accessorName;
+                /*
+                const auto &accessor = gltf.accessors[accessorIndex];
+                const auto &bufferView = gltf.bufferViews[accessor.bufferView];
+
+                const applesauce::VertexAttribute vattrib = vertexAttribFromName(accessorName);
+
+                // applesauce::VertexAttributeDescription desc;
+
+                applesauce::VertexBufferDescription desc{
+                    {applesauce::VertexAttribute::position, 3, offsetof(Vertex, position), sizeof(Vertex)},
+                    {applesauce::VertexAttribute::normal, 3, offsetof(Vertex, normal), sizeof(Vertex)},
+                };
+                */
+            }
+        }
     }
 
     return result;
