@@ -68,3 +68,4 @@ target_include_directories(combat_gl SYSTEM PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/bac
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/basic.vs.glsl assets/shaders/basic.vs.glsl COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/basic.fs.glsl assets/shaders/basic.fs.glsl COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/tenk6a.gltf assets/gltf/tenk6a.gltf COPYONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/wall-and-floor.gltf" "assets/gltf/wall-and-floor.gltf" COPYONLY)
