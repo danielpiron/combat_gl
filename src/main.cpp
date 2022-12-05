@@ -109,28 +109,23 @@ std::ostream &operator<<(std::ostream &os, const Window::MouseHandler::Button &b
 struct Mesh
 {
     std::shared_ptr<applesauce::VertexArray> array;
-    std::shared_ptr<applesauce::Buffer> buffer;
-    int elementArrayByteOffset;
+    std::vector<std::shared_ptr<applesauce::Buffer>> buffers;
+    std::shared_ptr<applesauce::Buffer> indexBuffer;
+    int indexBufferByteOffset;
+    int elementCount;
 };
 
-/*
 static applesauce::VertexAttribute vertexAttribFromName(const std::string &name)
 {
     if (name == "POSITION")
-    {
         return applesauce::VertexAttribute::position;
-    }
     else if (name == "NORMAL")
-    {
         return applesauce::VertexAttribute::normal;
-    }
     else if (name == "TEXCOORD_0")
-    {
         return applesauce::VertexAttribute::texcoord;
-    }
-    return applesauce::VertexAttribute::position;
+    else
+        return applesauce::VertexAttribute::none;
 }
-*/
 
 std::unordered_map<std::string, Mesh> loadMeshes(const char *filename)
 {
@@ -148,28 +143,40 @@ std::unordered_map<std::string, Mesh> loadMeshes(const char *filename)
 
     for (const auto &gltfMesh : gltf.meshes)
     {
-
         for (const auto &gltfMeshPrimitive : gltfMesh.primitives)
         {
             auto vertexArray = std::make_shared<applesauce::VertexArray>();
+            vertexArray->bind();
             for (const auto &[accessorName, accessorIndex] : gltfMeshPrimitive.attributes)
             {
-                (void)accessorIndex;
-                (void)accessorName;
-                /*
                 const auto &accessor = gltf.accessors[accessorIndex];
                 const auto &bufferView = gltf.bufferViews[accessor.bufferView];
-
-                const applesauce::VertexAttribute vattrib = vertexAttribFromName(accessorName);
-
-                // applesauce::VertexAttributeDescription desc;
+                const auto offset = bufferView.byteOffset + accessor.byteOffset;
+                const auto vAttrib = vertexAttribFromName(accessorName);
 
                 applesauce::VertexBufferDescription desc{
-                    {applesauce::VertexAttribute::position, 3, offsetof(Vertex, position), sizeof(Vertex)},
-                    {applesauce::VertexAttribute::normal, 3, offsetof(Vertex, normal), sizeof(Vertex)},
+                    {
+                        vAttrib,
+                        accessor.componentCount(),
+                        offset,
+                        bufferView.byteStride,
+                    },
                 };
-                */
+                vertexArray->addVertexBuffer(*buffers[bufferView.buffer], desc);
             }
+
+            const auto &indicesAccessor = gltf.accessors[gltfMeshPrimitive.indices];
+            const auto &indicesBufferView = gltf.bufferViews[indicesAccessor.bufferView];
+
+            result.emplace(gltfMesh.name, Mesh{
+                                              vertexArray,
+                                              buffers,
+                                              buffers[indicesBufferView.buffer],
+                                              indicesBufferView.byteOffset + indicesAccessor.byteOffset,
+                                              indicesAccessor.count,
+                                          });
+            std::cout << "Index buffer offset:" << indicesBufferView.byteOffset + indicesAccessor.byteOffset << std::endl;
+            vertexArray->unbind();
         }
     }
 
@@ -713,6 +720,8 @@ public:
         auto cubeMesh = std::make_shared<applesauce::VertexArray>();
         auto planeMesh = std::make_shared<applesauce::VertexArray>();
 
+        loadedMeshes = loadMeshes("assets/gltf/tenk6a.gltf");
+
         applesauce::VertexBufferDescription desc{
             {applesauce::VertexAttribute::position, 3, offsetof(Vertex, position), sizeof(Vertex)},
             {applesauce::VertexAttribute::normal, 3, offsetof(Vertex, normal), sizeof(Vertex)},
@@ -851,8 +860,20 @@ public:
             shader->set("SpecularStrength", specularStrength);
 
             size_t index = entity.meshIndex < 2 ? entity.meshIndex : 1;
-            meshes[index]->bind();
-            glDrawArrays(GL_TRIANGLES, 0, meshes[index]->safeElementCount());
+            if (entity.meshIndex < 2)
+            {
+                meshes[index]->bind();
+                glDrawArrays(GL_TRIANGLES, 0, meshes[index]->safeElementCount());
+            }
+            else
+            {
+                for (const auto &[name, mesh] : loadedMeshes)
+                {
+                    mesh.array->bind();
+                    mesh.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
+                    glDrawElements(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(mesh.indexBufferByteOffset));
+                }
+            }
         }
 
         // GUI tuff
@@ -894,6 +915,8 @@ private:
     std::shared_ptr<applesauce::VertexBuffer<Vertex>> planeBuffer;
     std::vector<std::shared_ptr<applesauce::VertexArray>> meshes;
     std::vector<Entity> entities;
+
+    std::unordered_map<std::string, Mesh> loadedMeshes;
 
     std::vector<std::shared_ptr<Tank>> players;
 

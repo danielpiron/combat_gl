@@ -101,7 +101,7 @@ namespace applesauce
             glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
         }
 
-        void bindTo(Target target)
+        void bindTo(Target target) const
         {
             glBindBuffer(getGlTarget(target), glId());
         }
@@ -113,7 +113,8 @@ namespace applesauce
 
         void unbind() const
         {
-            glBindBuffer(_target, 0);
+            if (_target)
+                glBindBuffer(_target, 0);
         }
 
         void *map()

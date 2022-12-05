@@ -9,6 +9,7 @@ namespace applesauce
 {
     enum class VertexAttribute
     {
+        none = -1,
         position = 0,
         normal,
         texcoord,
@@ -58,7 +59,7 @@ namespace applesauce
         void addVertexBuffer(const applesauce::Buffer &buffer, const VertexBufferDescription &descriptions)
         {
             bind();
-            buffer.bind();
+            buffer.bindTo(Buffer::Target::vertex_array);
 
             for (const auto &desc : descriptions)
             {

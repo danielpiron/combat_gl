@@ -1,5 +1,7 @@
 #include "Window.h"
 
+#include <cassert>
+
 #ifdef GLAD_DEBUG
 const char *glErrorName(GLenum error)
 {
@@ -44,6 +46,7 @@ void post_gl_call(const char *name, void *, int, ...)
     if (error_code != GL_NO_ERROR)
     {
         fprintf(stderr, "ERROR %s in %s\n", glErrorName(error_code), name);
+        assert(false);
     }
 }
 #endif
