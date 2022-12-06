@@ -551,13 +551,14 @@ public:
         glEnable(GL_CULL_FACE);
 
         shadow->use();
-        glm::mat4 lightViewMatrix;
+        glm::mat4 lightSpaceMatrix;
         { // Shadow map part
             float lightDist = 10;
             glm::mat4 view = glm::lookAt(lightDir * lightDist,
                                          glm::vec3(0),
                                          glm::vec3(0, 1, 0));
             glm::mat4 projection = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 20.0f);
+            lightSpaceMatrix = projection * view;
 
             for (const auto &entity : entities)
             {
@@ -565,10 +566,9 @@ public:
                 model = glm::translate(model, entity.position);
                 model = glm::rotate(model, entity.angle, glm::vec3(0, 1, 0));
 
-                glm::mat4 modelView = view * model;
-                lightViewMatrix = projection * modelView;
+                glm::mat4 MVPMatrix = lightSpaceMatrix * model;
 
-                shadow->set("MVPMatrix", lightViewMatrix);
+                shadow->set("MVPMatrix", MVPMatrix);
 
                 for (const auto &mesh : meshGroups[entity.meshIndex])
                 {
@@ -608,10 +608,11 @@ public:
             glm::mat3 normalMatrix = glm::mat3(modelView);
 
             glm::mat4 MVPMatrix = projection * modelView;
+            glm::mat4 LightViewMatrix = lightSpaceMatrix * model;
 
             shader->set("MVPMatrix", MVPMatrix);
             shader->set("ModelViewMatrix", modelView);
-            shader->set("LightViewMatrix", lightViewMatrix);
+            shader->set("LightViewMatrix", LightViewMatrix);
             shader->set("NormalMatrix", normalMatrix);
             shader->set("Color", entity.color);
             shader->set("Ambient", ambient);
