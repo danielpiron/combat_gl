@@ -633,7 +633,7 @@ public:
         quadShader->use();
 
         glDisable(GL_DEPTH_TEST);
-        renderQuad();
+        // renderQuad();
 
         // GUI tuff
         ImGui_ImplOpenGL3_NewFrame();
