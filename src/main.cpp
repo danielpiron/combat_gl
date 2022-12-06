@@ -29,6 +29,50 @@
 #include <sstream>
 #include <vector>
 
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
+{
+    if (quadVAO == 0)
+    {
+        float quadVertices[] = {
+            -0.5f,
+            0.5f,
+            0.0f,
+            0.0f,
+            1.0f,
+            -0.5f,
+            -0.5f,
+            0.0f,
+            0.0f,
+            0.0f,
+            0.5f,
+            0.5f,
+            0.0f,
+            1.0f,
+            1.0f,
+            0.5f,
+            -0.5f,
+            0.0f,
+            1.0f,
+            0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+}
+
 struct Vertex
 {
     glm::vec3 position;
@@ -40,6 +84,7 @@ static constexpr glm::vec3 WALL_COLOR = glm::vec3{0.6, 0.6, 1.0};
 
 static float MAX_DIST = 30.0f;
 static constexpr float MIN_DIST = 8.0f;
+static constexpr unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
 static size_t nextTankColor = 0;
 static constexpr glm::vec3 TANK_COLORS[] = {
@@ -378,7 +423,8 @@ public:
 
         // Loads from assets/shaders/basic.fs.glsl and assets/shaders/basic.vs.glsl
         shader = loadShader("basic");
-        shader->use();
+        shadow = loadShader("shadow");
+        quadShader = loadShader("quad");
 
         const auto levelMeshes = loadMeshes("assets/gltf/wall-and-floor.gltf");
         const auto tenkMeshes = loadMeshes("assets/gltf/tenk6a.gltf");
@@ -393,7 +439,6 @@ public:
 
         const auto [width, height] = window.framebufferSize();
         glViewport(0, 0, width, height);
-        glEnable(GL_DEPTH_TEST);
 
         const char *playField = "********************************\n"
                                 "*                              *\n"
@@ -451,6 +496,25 @@ public:
             }
         }
         camera.fieldOfVision = 42.0f;
+
+        // Init shadow mapping bits
+
+        glGenFramebuffers(1, &depthMapFBO);
+
+        glGenTextures(1, &depthMap);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+                     SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     void update() override
@@ -478,16 +542,60 @@ public:
 
     void display() override
     {
-        window.clear({0.1f, 0.1f, 0.1f, 1.0f});
+        glm::vec3 lightDir = glm::mat3(glm::yawPitchRoll(lightTheta, lightPitch, 0.0f)) * glm::vec3{0, 0, -1.0};
+
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+
+        shadow->use();
+        glm::mat4 lightViewMatrix;
+        { // Shadow map part
+            float lightDist = 10;
+            glm::mat4 view = glm::lookAt(lightDir * lightDist,
+                                         glm::vec3(0),
+                                         glm::vec3(0, 1, 0));
+            glm::mat4 projection = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 20.0f);
+
+            for (const auto &entity : entities)
+            {
+                auto model = glm::mat4(1.0);
+                model = glm::translate(model, entity.position);
+                model = glm::rotate(model, entity.angle, glm::vec3(0, 1, 0));
+
+                glm::mat4 modelView = view * model;
+                lightViewMatrix = projection * modelView;
+
+                shadow->set("MVPMatrix", lightViewMatrix);
+
+                for (const auto &mesh : meshGroups[entity.meshIndex])
+                {
+                    mesh.array->bind();
+                    mesh.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
+                    glDrawElements(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(mesh.indexBufferByteOffset));
+                }
+            }
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        shader->use();
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
 
         const auto [width, height] = window.framebufferSize();
         camera.viewport = {width, height};
+        glViewport(0, 0, width, height);
+
+        window.clear({0.1f, 0.1f, 0.1f, 1.0f});
 
         camera.position = glm::mat3(glm::yawPitchRoll(theta, pitch, 0.0f)) * glm::vec3{0, 0, -dist};
         glm::mat4 view = camera.lookAtMatrix(cameraTarget);
         glm::mat4 projection = camera.projectionMatrix();
 
-        glm::vec3 lightDir = glm::mat3(glm::yawPitchRoll(lightTheta, lightPitch, 0.0f)) * glm::vec3{0, 0, -1.0};
         glm::vec3 LightDirection = glm::mat3(view) * lightDir;
 
         for (const auto &entity : entities)
@@ -503,6 +611,7 @@ public:
 
             shader->set("MVPMatrix", MVPMatrix);
             shader->set("ModelViewMatrix", modelView);
+            shader->set("LightViewMatrix", lightViewMatrix);
             shader->set("NormalMatrix", normalMatrix);
             shader->set("Color", entity.color);
             shader->set("Ambient", ambient);
@@ -518,6 +627,13 @@ public:
                 glDrawElements(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(mesh.indexBufferByteOffset));
             }
         }
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        quadShader->use();
+
+        glDisable(GL_DEPTH_TEST);
+        renderQuad();
 
         // GUI tuff
         ImGui_ImplOpenGL3_NewFrame();
@@ -554,6 +670,9 @@ public:
 
 private:
     std::shared_ptr<Shader> shader;
+    std::shared_ptr<Shader> shadow;
+    std::shared_ptr<Shader> quadShader;
+
     std::vector<Entity> entities;
 
     std::vector<std::vector<Mesh>> meshGroups;
@@ -568,6 +687,7 @@ private:
     double last_xpos = 0;
     double last_ypos = 0;
     bool move_camera = false;
+
     Camera camera;
     glm::vec3 cameraTarget{0};
     glm::vec3 cameraVelocity{0};
@@ -578,6 +698,10 @@ private:
     float lightTheta = 0;
     float specularPower = 32.0f;
     float specularStrength = 1.0f;
+
+    // Shadow map bits
+    GLuint depthMapFBO;
+    GLuint depthMap;
 };
 
 int main()
