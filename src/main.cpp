@@ -453,13 +453,8 @@ public:
         camera.fieldOfVision = 42.0f;
     }
 
-    void display() override
+    void update() override
     {
-        window.clear({0.1f, 0.1f, 0.1f, 1.0f});
-
-        const auto [width, height] = window.framebufferSize();
-        camera.viewport = {width, height};
-
         for (auto &player : players)
         {
             player->update();
@@ -479,19 +474,21 @@ public:
 
         distVelocity += -distVelocity * .1f;
         dist += distVelocity;
+    }
+
+    void display() override
+    {
+        window.clear({0.1f, 0.1f, 0.1f, 1.0f});
+
+        const auto [width, height] = window.framebufferSize();
+        camera.viewport = {width, height};
 
         camera.position = glm::mat3(glm::yawPitchRoll(theta, pitch, 0.0f)) * glm::vec3{0, 0, -dist};
         glm::mat4 view = camera.lookAtMatrix(cameraTarget);
         glm::mat4 projection = camera.projectionMatrix();
 
-        static float lightPitch = M_PI / 2;
-        static float lightTheta = 0;
-
         glm::vec3 lightDir = glm::mat3(glm::yawPitchRoll(lightTheta, lightPitch, 0.0f)) * glm::vec3{0, 0, -1.0};
         glm::vec3 LightDirection = glm::mat3(view) * lightDir;
-
-        static float specularPower = 32.0f;
-        static float specularStrength = 1.0f;
 
         for (const auto &entity : entities)
         {
@@ -576,6 +573,11 @@ private:
     glm::vec3 cameraVelocity{0};
 
     glm::vec3 ambient{0.3, 0.3, 0.4};
+
+    float lightPitch = M_PI / 2;
+    float lightTheta = 0;
+    float specularPower = 32.0f;
+    float specularStrength = 1.0f;
 };
 
 int main()

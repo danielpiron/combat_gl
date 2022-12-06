@@ -18,6 +18,7 @@ public:
     {
     }
     virtual void init() = 0;
+    virtual void update() {};
     virtual void display() = 0;
     virtual void cleanUp() {}
 
@@ -50,6 +51,7 @@ private:
         {
             window.pollEvents();
 
+            update();
             display();
 
             window.swapBuffers();
