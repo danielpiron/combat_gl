@@ -23,19 +23,26 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     // transform to [0,1] range
     projCoords = projCoords * 0.5 + 0.5;
-    // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-    float closestDepth = texture(shadowMap, projCoords.xy).r; 
-    // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
-    // check whether current frag pos is in shadow
-    float shadow = currentDepth - 0.005 > closestDepth  ? 1.0 : 0.0;
 
-    return shadow;
+    float shadow = 0.0f;
+    int sampleRadius = 1;
+    vec2 pixelSize = 1.0 / textureSize(shadowMap, 0);
+    for (int y = -sampleRadius; y <= sampleRadius; y++) {
+        for (int x = -sampleRadius; x <= sampleRadius; x++) {
+            float closestDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * pixelSize).r; 
+            if (currentDepth > closestDepth + 0.005) 
+                shadow += 1.0f;
+        }
+    }
+
+    return shadow / pow((sampleRadius * 2 + 1), 2);
 }  
 
 void main() {
+    float shadow = ShadowCalculation(lightSpacePosition); 
     float diffuse = max(0.0, dot(normal, LightDirection));
-    vec3 scatteredLight = Ambient + LightColor * diffuse;
+    vec3 scatteredLight = Ambient + LightColor * (diffuse * (1.0 - shadow));
 
     vec3 viewDir = normalize(-position);
     vec3 reflectDir = reflect(-LightDirection, normal);
@@ -43,8 +50,7 @@ void main() {
     float specular = pow(max(dot(viewDir, reflectDir), 0.0), SpecularPower);
     vec3 reflectedLight = SpecularStrength * specular * LightColor;
 
-    float shadow = ShadowCalculation(lightSpacePosition); 
-    vec3 rgb = min(Color * (scatteredLight * (1.0 - shadow)) + reflectedLight, vec3(1.0));
+    vec3 rgb = min(Color * scatteredLight + reflectedLight, vec3(1.0));
 
     fColor = vec4(rgb, 1.0);
 }

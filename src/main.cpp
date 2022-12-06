@@ -550,14 +550,15 @@ public:
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
+        static float lightDist = 11.2;
+        static float lightSize = 18.0f;
         shadow->use();
         glm::mat4 lightSpaceMatrix;
         { // Shadow map part
-            float lightDist = 10;
             glm::mat4 view = glm::lookAt(lightDir * lightDist,
                                          glm::vec3(0),
                                          glm::vec3(0, 1, 0));
-            glm::mat4 projection = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.1f, 20.0f);
+            glm::mat4 projection = glm::ortho(-lightSize, lightSize, -lightSize, lightSize, 0.1f, 20.0f);
             lightSpaceMatrix = projection * view;
 
             for (const auto &entity : entities)
@@ -647,6 +648,8 @@ public:
 
         ImGui::SliderFloat("lightPitch", &lightPitch, 0, M_PI);
         ImGui::SliderFloat("lightTheta", &lightTheta, 0, M_PI * 2);
+        ImGui::SliderFloat("lightDist", &lightDist, 1, 50);
+        ImGui::SliderFloat("lightSize", &lightSize, 1, 50);
 
         ImGui::SliderFloat("SpecularPower", &specularPower, 0.0f, 256.0f);
         ImGui::SliderFloat("SpecularStrength", &specularStrength, 0.0f, 1.0f);
@@ -693,10 +696,10 @@ private:
     glm::vec3 cameraTarget{0};
     glm::vec3 cameraVelocity{0};
 
-    glm::vec3 ambient{0.3, 0.3, 0.4};
+    glm::vec3 ambient{87.0f / 255.0f, 57.0 / 255.0f, 129.0f / 255.0f};
 
-    float lightPitch = M_PI / 2;
-    float lightTheta = 0;
+    float lightPitch = 2.119;
+    float lightTheta = 0.839;
     float specularPower = 32.0f;
     float specularStrength = 1.0f;
 
