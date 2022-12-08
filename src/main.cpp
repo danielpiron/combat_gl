@@ -24,6 +24,7 @@
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <list>
 #include <memory>
 #include <ostream>
 #include <sstream>
@@ -151,13 +152,18 @@ std::ostream &operator<<(std::ostream &os, const Window::MouseHandler::Button &b
 }
 
 // Experimental Mesh structure
-struct Mesh
+struct SubMesh
 {
     std::shared_ptr<applesauce::VertexArray> array;
     std::vector<std::shared_ptr<applesauce::Buffer>> buffers;
     std::shared_ptr<applesauce::Buffer> indexBuffer;
     int indexBufferByteOffset;
     int elementCount;
+};
+
+struct Mesh
+{
+    std::list<SubMesh> submeshes;
 };
 
 static applesauce::VertexAttribute vertexAttribFromName(const std::string &name)
@@ -188,6 +194,7 @@ std::unordered_map<std::string, Mesh> loadMeshes(const char *filename)
 
     for (const auto &gltfMesh : gltf.meshes)
     {
+        std::list<SubMesh> submeshes;
         for (const auto &gltfMeshPrimitive : gltfMesh.primitives)
         {
             auto vertexArray = std::make_shared<applesauce::VertexArray>();
@@ -213,16 +220,17 @@ std::unordered_map<std::string, Mesh> loadMeshes(const char *filename)
             const auto &indicesAccessor = gltf.accessors[gltfMeshPrimitive.indices];
             const auto &indicesBufferView = gltf.bufferViews[indicesAccessor.bufferView];
 
-            result.emplace(gltfMesh.name, Mesh{
-                                              vertexArray,
-                                              buffers,
-                                              buffers[indicesBufferView.buffer],
-                                              indicesBufferView.byteOffset + indicesAccessor.byteOffset,
-                                              indicesAccessor.count,
-                                          });
+            submeshes.emplace_back(SubMesh{
+                vertexArray,
+                buffers,
+                buffers[indicesBufferView.buffer],
+                indicesBufferView.byteOffset + indicesAccessor.byteOffset,
+                indicesAccessor.count,
+            });
             std::cout << "Index buffer offset:" << indicesBufferView.byteOffset + indicesAccessor.byteOffset << std::endl;
             vertexArray->unbind();
         }
+        result.emplace(gltfMesh.name, Mesh{submeshes});
     }
 
     return result;
@@ -573,9 +581,12 @@ public:
 
                 for (const auto &mesh : meshGroups[entity.meshIndex])
                 {
-                    mesh.array->bind();
-                    mesh.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
-                    glDrawElements(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(mesh.indexBufferByteOffset));
+                    for (const auto &submesh : mesh.submeshes)
+                    {
+                        submesh.array->bind();
+                        submesh.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
+                        glDrawElements(GL_TRIANGLES, submesh.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(submesh.indexBufferByteOffset));
+                    }
                 }
             }
         }
@@ -624,9 +635,12 @@ public:
 
             for (const auto &mesh : meshGroups[entity.meshIndex])
             {
-                mesh.array->bind();
-                mesh.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
-                glDrawElements(GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(mesh.indexBufferByteOffset));
+                for (const auto &submesh : mesh.submeshes)
+                {
+                    submesh.array->bind();
+                    submesh.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
+                    glDrawElements(GL_TRIANGLES, submesh.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(submesh.indexBufferByteOffset));
+                }
             }
         }
 
