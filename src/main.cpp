@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+
 #include "applesauce/App.h"
 #include "applesauce/VertexBuffer.h"
 #include "applesauce/VertexArray.h"
@@ -25,6 +27,7 @@
 #include <filesystem>
 #include <fstream>
 #include <list>
+#include <cmath>
 #include <memory>
 #include <ostream>
 #include <sstream>
@@ -115,8 +118,8 @@ std::shared_ptr<Shader> loadShader(const char *name)
     std::cout << "\t" << vertexShaderPath << "\n";
     std::cout << "\t" << fragmentShaderPath << std::endl;
 
-    const auto vertex_shader_text = readFileText(vertexShaderPath.c_str());
-    const auto fragment_shader_text = readFileText(fragmentShaderPath.c_str());
+    const auto vertex_shader_text = readFileText(vertexShaderPath.string().c_str());
+    const auto fragment_shader_text = readFileText(fragmentShaderPath.string().c_str());
 
     auto shader = std::make_shared<Shader>();
     shader->add_vertex_stage(vertex_shader_text);
