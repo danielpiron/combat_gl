@@ -428,13 +428,12 @@ public:
         quadShader = loadShader("quad");
 
         const auto levelMeshes = loadMeshes("assets/gltf/wall-and-floor.gltf");
-        const auto tenkMeshes = loadMeshes("assets/gltf/tenk6a.gltf");
+        const auto tenkMeshes = loadMeshes("assets/gltf/tenk7.gltf");
 
         meshGroups.resize(3);
         meshGroups[0].push_back(levelMeshes.at("Floor"));
         meshGroups[1].push_back(levelMeshes.at("Wall"));
-        meshGroups[2].push_back(tenkMeshes.at("Body"));
-        meshGroups[2].push_back(tenkMeshes.at("Turret"));
+        meshGroups[2].push_back(tenkMeshes.at("Tenk"));
 
         glfwSwapInterval(1);
 
