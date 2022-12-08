@@ -84,15 +84,15 @@ static constexpr glm::vec3 WALL_COLOR = glm::vec3{0.6, 0.6, 1.0};
 
 static float MAX_DIST = 30.0f;
 static constexpr float MIN_DIST = 8.0f;
-static constexpr unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+static constexpr unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 
 static size_t nextTankColor = 0;
-static constexpr glm::vec3 TANK_COLORS[] = {
-    glm::vec3{0, 0, 1}, // blue
-    glm::vec3{1, 0, 0}, // red
-    glm::vec3{1, 1, 1}, // white
-    glm::vec3{1, 1, 0}, // yellow
-    glm::vec3{0, 0, 0}, // black
+static glm::vec3 TANK_COLORS[] = {
+    glm::vec3{58.0f / 255.0, 58.0f / 255.0, 156.0f / 255.0}, // blue
+    glm::vec3{163.0f / 255.0, 58.0f / 255.0, 36.0f / 255.0}, // red
+    glm::vec3{1, 1, 1},                                      // white
+    glm::vec3{1, 1, 0},                                      // yellow
+    glm::vec3{0, 0, 0},                                      // black
 };
 
 std::string readFileText(const char *filename)
@@ -305,8 +305,9 @@ public:
             }
         }
 
-    private:
         Entity *entity;
+
+    private:
         Steer steering = Steer::neutral;
         bool advancing = false;
     };
@@ -645,6 +646,13 @@ public:
         ImGui::Begin("Adjustment");
 
         ImGui::ColorEdit3("ambient", (float *)&ambient[0]);
+        ImGui::ColorEdit3("tank 1 color", (float *)&players[0]->entity->color);
+        ImGui::ColorEdit3("tank 2 color", (float *)&players[1]->entity->color);
+
+        ImGui::SliderFloat("lightPitch", &lightPitch, 0, M_PI);
+        ImGui::SliderFloat("lightTheta", &lightTheta, 0, M_PI * 2);
+        ImGui::SliderFloat("lightDist", &lightDist, 1, 50);
+        ImGui::SliderFloat("lightSize", &lightSize, 1, 50);
 
         ImGui::SliderFloat("lightPitch", &lightPitch, 0, M_PI);
         ImGui::SliderFloat("lightTheta", &lightTheta, 0, M_PI * 2);
