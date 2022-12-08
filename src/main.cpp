@@ -85,7 +85,7 @@ static constexpr glm::vec3 WALL_COLOR = glm::vec3{0.6, 0.6, 1.0};
 
 static float MAX_DIST = 30.0f;
 static constexpr float MIN_DIST = 8.0f;
-static constexpr unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
+static constexpr unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
 static size_t nextTankColor = 0;
 static glm::vec3 TANK_COLORS[] = {
