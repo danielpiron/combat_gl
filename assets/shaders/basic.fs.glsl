@@ -42,7 +42,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 void main() {
     float shadow = ShadowCalculation(lightSpacePosition); 
     float diffuse = max(0.0, dot(normal, LightDirection));
-    vec3 scatteredLight = Ambient + LightColor * (diffuse * (1.0 - shadow));
+    vec3 scatteredLight = Ambient + LightColor * diffuse * (1.0 - shadow);
 
     vec3 viewDir = normalize(-position);
     vec3 reflectDir = reflect(-LightDirection, normal);
@@ -50,7 +50,7 @@ void main() {
     float specular = pow(max(dot(viewDir, reflectDir), 0.0), SpecularPower);
     vec3 reflectedLight = SpecularStrength * specular * LightColor;
 
-    vec3 rgb = min(Color * scatteredLight + reflectedLight, vec3(1.0));
+    vec3 rgb = min(Color * scatteredLight + reflectedLight * (1.0 - shadow), vec3(1.0));
 
     fColor = vec4(rgb, 1.0);
 }
