@@ -39,12 +39,6 @@ namespace applesauce
     class Buffer : public GLResource
     {
     public:
-        enum class Type
-        {
-            none,
-            vertex,
-        };
-
         enum class Target
         {
             none,
@@ -58,17 +52,6 @@ namespace applesauce
             GLuint new_id;
             glGenBuffers(1, &new_id);
             return new_id;
-        }
-
-        static GLenum getGlTarget(Type type)
-        {
-            switch (type)
-            {
-            case Type::vertex:
-                return GL_ARRAY_BUFFER;
-            default:
-                return 0;
-            }
         }
 
         static GLenum getGlTarget(Target target)
@@ -85,8 +68,8 @@ namespace applesauce
         }
 
     public:
-        Buffer(size_t size, Type type, size_t elementSize = 1)
-            : GLResource(genGlBuffer()), _target(getGlTarget(type)), _size(size), _elementSize(elementSize)
+        Buffer(size_t size, Target target, size_t elementSize = 1)
+            : GLResource(genGlBuffer()), _target(getGlTarget(target)), _size(size), _elementSize(elementSize)
         {
             bind();
             glBufferData(_target, size, nullptr, GL_STATIC_DRAW);

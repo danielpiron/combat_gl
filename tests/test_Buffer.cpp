@@ -32,7 +32,7 @@ TEST_F(AppleSauceBuffer, CanBeMappedToVertexPointer)
         {{-1.0, 1.0, 0}, {1.0f, 0}},
     };
 
-    applesauce::Buffer buffer(sizeof(TestVertex) * 3, applesauce::Buffer::Type::vertex);
+    applesauce::Buffer buffer(sizeof(TestVertex) * 3, applesauce::Buffer::Target::vertex_array);
 
     buffer.bind();
     auto ptr = reinterpret_cast<TestVertex *>(buffer.map());
@@ -73,7 +73,7 @@ TEST_F(AppleSauceBuffer, CanInitializeWithGenericData)
 
 TEST_F(AppleSauceBuffer, CanUnbindToBuffer0)
 {
-    applesauce::Buffer buffer(4, applesauce::Buffer::Type::vertex);
+    applesauce::Buffer buffer(4, applesauce::Buffer::Target::vertex_array);
 
     buffer.bind();
     GLint bufferId;
@@ -90,7 +90,7 @@ TEST_F(AppleSauceBuffer, CanUnbindToBuffer0)
 
 TEST_F(AppleSauceBuffer, CanLeaveBufferUnboundAfterConstructor)
 {
-    applesauce::Buffer buffer(4, applesauce::Buffer::Type::vertex);
+    applesauce::Buffer buffer(4, applesauce::Buffer::Target::vertex_array);
 
     GLint postConstructId;
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &postConstructId);
@@ -102,8 +102,8 @@ TEST_F(AppleSauceBuffer, CanVerifyBuffersAreDistinct)
     float expected1 = 1234.5f;
     float expected2 = 12.345f;
 
-    applesauce::Buffer buffer1(sizeof(float), applesauce::Buffer::Type::vertex);
-    applesauce::Buffer buffer2(sizeof(float), applesauce::Buffer::Type::vertex);
+    applesauce::Buffer buffer1(sizeof(float), applesauce::Buffer::Target::vertex_array);
+    applesauce::Buffer buffer2(sizeof(float), applesauce::Buffer::Target::vertex_array);
 
     buffer1.bind();
     auto ptr1 = reinterpret_cast<float *>(buffer1.map());
@@ -137,7 +137,7 @@ TEST_F(AppleSauceBuffer, CanVerifyBuffersAreDistinct)
 
 TEST_F(AppleSauceBuffer, CanOnlyMoveConstructAndAssign)
 {
-    applesauce::Buffer buffer1(sizeof(float), applesauce::Buffer::Type::vertex);
+    applesauce::Buffer buffer1(sizeof(float), applesauce::Buffer::Target::vertex_array);
 
     buffer1.bind();
     GLint buffer1Id;
@@ -174,7 +174,7 @@ TEST_F(AppleSauceBuffer, CanOnlyMoveConstructAndAssign)
 
 TEST_F(AppleSauceBuffer, CanSpecifyElementSize)
 {
-    applesauce::Buffer buffer(sizeof(TestVertex) * 3, applesauce::Buffer::Type::vertex, sizeof(TestVertex));
+    applesauce::Buffer buffer(sizeof(TestVertex) * 3, applesauce::Buffer::Target::vertex_array, sizeof(TestVertex));
 
     EXPECT_EQ(buffer.size(), sizeof(TestVertex) * 3);
     EXPECT_EQ(buffer.elementCount(), 3);
