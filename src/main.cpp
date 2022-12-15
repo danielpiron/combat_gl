@@ -7,8 +7,6 @@
 #include "applesauce/Camera.h"
 #include "applesauce/Mesh.h"
 
-#include "util/gltf.h"
-
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -25,57 +23,12 @@
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
-#include <fstream>
 #include <list>
 #include <cmath>
 #include <memory>
 #include <ostream>
 #include <sstream>
 #include <vector>
-
-unsigned int quadVAO = 0;
-unsigned int quadVBO;
-void renderQuad()
-{
-    if (quadVAO == 0)
-    {
-        float quadVertices[] = {
-            -0.5f,
-            0.5f,
-            0.0f,
-            0.0f,
-            1.0f,
-            -0.5f,
-            -0.5f,
-            0.0f,
-            0.0f,
-            0.0f,
-            0.5f,
-            0.5f,
-            0.0f,
-            1.0f,
-            1.0f,
-            0.5f,
-            -0.5f,
-            0.0f,
-            1.0f,
-            0.0f,
-        };
-        // setup plane VAO
-        glGenVertexArrays(1, &quadVAO);
-        glGenBuffers(1, &quadVBO);
-        glBindVertexArray(quadVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
-    }
-    glBindVertexArray(quadVAO);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
-}
 
 static constexpr glm::vec3 FLOOR_COLOR = glm::vec3{1.0, 0.6, 0.1};
 static constexpr glm::vec3 WALL_COLOR = glm::vec3{0.6, 0.6, 1.0};
@@ -88,30 +41,7 @@ static size_t nextTankColor = 0;
 static glm::vec3 TANK_COLORS[] = {
     glm::vec3{58.0f / 255.0, 58.0f / 255.0, 156.0f / 255.0}, // blue
     glm::vec3{163.0f / 255.0, 58.0f / 255.0, 36.0f / 255.0}, // red
-    glm::vec3{1, 1, 1},                                      // white
-    glm::vec3{1, 1, 0},                                      // yellow
-    glm::vec3{0, 0, 0},                                      // black
 };
-
-std::ostream &operator<<(std::ostream &os, const Window::MouseHandler::Button &b)
-{
-    switch (b)
-    {
-    case Window::MouseHandler::Button::left:
-        os << "left";
-        break;
-    case Window::MouseHandler::Button::right:
-        os << "right";
-        break;
-    case Window::MouseHandler::Button::middle:
-        os << "middle";
-        break;
-    default:
-        os << "unknown mouse button";
-        break;
-    }
-    return os;
-}
 
 class Triangles : public App,
                   public Window::ScrollHandler,
@@ -310,7 +240,6 @@ public:
         // Loads from assets/shaders/basic.fs.glsl and assets/shaders/basic.vs.glsl
         shader = loadShader("basic");
         shadow = loadShader("shadow");
-        quadShader = loadShader("quad");
 
         const auto levelMeshes = loadMeshes("assets/gltf/wall-and-floor.gltf");
         const auto tenkMeshes = loadMeshes("assets/gltf/tenk7.gltf");
@@ -361,7 +290,7 @@ public:
                 // If there's a T also put a tank, cause why not
                 if (character == 'T')
                 {
-                    entities.push_back({{col, 0, row}, 0, 2, TANK_COLORS[nextTankColor++ % 5]});
+                    entities.push_back({{col, 0, row}, 0, 2, TANK_COLORS[nextTankColor++ % 2]});
                 }
 
                 col++;
@@ -523,10 +452,6 @@ public:
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, depthMap);
-        quadShader->use();
-
-        glDisable(GL_DEPTH_TEST);
-        // renderQuad();
 
         // GUI tuff
         ImGui_ImplOpenGL3_NewFrame();
@@ -573,7 +498,6 @@ public:
 private:
     std::shared_ptr<Shader> shader;
     std::shared_ptr<Shader> shadow;
-    std::shared_ptr<Shader> quadShader;
 
     std::vector<Entity> entities;
 
