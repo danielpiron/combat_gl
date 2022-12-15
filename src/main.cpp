@@ -7,10 +7,6 @@
 #include "applesauce/Camera.h"
 #include "applesauce/Mesh.h"
 
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-
 #define GLM_SWIZZLE
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
@@ -218,21 +214,6 @@ public:
 
     void init() override
     {
-
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO &io = ImGui::GetIO();
-        (void)io;
-
-        ImGui::StyleColorsDark();
-
-        const char *glsl_version = "#version 150";
-
-        ImGui_ImplGlfw_InitForOpenGL(window.glfwWindow(), true);
-        ImGui_ImplOpenGL3_Init(glsl_version);
-
-        srand(std::time(0));
-
         window.setScrollHandler(this);
         window.setMouseHandler(this);
         window.setKeyHandler(this);
@@ -452,39 +433,6 @@ public:
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, depthMap);
-
-        // GUI tuff
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        ImGui::Begin("Adjustment");
-
-        ImGui::ColorEdit3("ambient", (float *)&ambient[0]);
-        ImGui::ColorEdit3("tank 1 color", (float *)&players[0]->entity->color);
-        ImGui::ColorEdit3("tank 2 color", (float *)&players[1]->entity->color);
-
-        ImGui::SliderFloat("lightPitch", &lightPitch, 0, M_PI);
-        ImGui::SliderFloat("lightTheta", &lightTheta, 0, M_PI * 2);
-        ImGui::SliderFloat("lightDist", &lightDist, 1, 50);
-        ImGui::SliderFloat("lightSize", &lightSize, 1, 50);
-
-        ImGui::SliderFloat("lightPitch", &lightPitch, 0, M_PI);
-        ImGui::SliderFloat("lightTheta", &lightTheta, 0, M_PI * 2);
-        ImGui::SliderFloat("lightDist", &lightDist, 1, 50);
-        ImGui::SliderFloat("lightSize", &lightSize, 1, 50);
-
-        ImGui::SliderFloat("SpecularPower", &specularPower, 0.0f, 256.0f);
-        ImGui::SliderFloat("SpecularStrength", &specularStrength, 0.0f, 1.0f);
-
-        ImGui::SliderFloat("camera.FOV", &camera.fieldOfVision, 0.1f, 120.0f);
-        ImGui::SliderFloat("MAX DIST.FOV", &MAX_DIST, 0.1f, 120.0f);
-
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::End();
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 
     void cleanUp() override
