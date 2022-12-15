@@ -26,18 +26,7 @@
 #include <sstream>
 #include <vector>
 
-static constexpr glm::vec3 FLOOR_COLOR = glm::vec3{1.0, 0.6, 0.1};
-static constexpr glm::vec3 WALL_COLOR = glm::vec3{0.6, 0.6, 1.0};
-
-static float MAX_DIST = 30.0f;
-static constexpr float MIN_DIST = 8.0f;
 static constexpr unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-
-static size_t nextTankColor = 0;
-static glm::vec3 TANK_COLORS[] = {
-    glm::vec3{58.0f / 255.0, 58.0f / 255.0, 156.0f / 255.0}, // blue
-    glm::vec3{163.0f / 255.0, 58.0f / 255.0, 36.0f / 255.0}, // red
-};
 
 class Triangles : public App,
                   public Window::ScrollHandler,
@@ -53,130 +42,13 @@ public:
         glm::vec3 color;
     };
 
-    class Tank
-    {
-        enum class Steer
-        {
-            neutral,
-            left,
-            right
-        };
-
-    public:
-        Tank(Entity *entity) : entity(entity) {}
-
-        void steerLeft()
-        {
-            steering = Steer::left;
-        }
-        void steerRight()
-        {
-            steering = Steer::right;
-        }
-        void releaseSteering()
-        {
-            steering = Steer::neutral;
-        }
-
-        const glm::vec3 position() const
-        {
-            return entity->position;
-        }
-
-        void advance()
-        {
-            advancing = true;
-        }
-
-        void halt()
-        {
-            advancing = false;
-        }
-
-        void update()
-        {
-            static float steerRate = 0.03;
-            static float speed = 0.06;
-            switch (steering)
-            {
-            case Steer::left:
-                entity->angle += steerRate;
-                break;
-            case Steer::right:
-                entity->angle -= steerRate;
-                break;
-            case Steer::neutral:
-                break;
-            }
-
-            if (advancing)
-            {
-                glm::vec3 direction = glm::rotateY(glm::vec3{0.0, 0.0, -1.0}, entity->angle);
-                entity->position += direction * speed;
-            }
-        }
-
-        Entity *entity;
-
-    private:
-        Steer steering = Steer::neutral;
-        bool advancing = false;
-    };
-
 public:
-    void onKeyDown(int key) override
+    void onKeyDown(int) override
     {
-        std::cout << "KEY DOWN: " << key << std::endl;
-        if (players.size() < 2 || players[0] == nullptr || players[1] == nullptr)
-            return;
-        if (key == GLFW_KEY_A)
-        {
-            players[0]->steerLeft();
-        }
-        else if (key == GLFW_KEY_D)
-        {
-            players[0]->steerRight();
-        }
-        else if (key == GLFW_KEY_W)
-        {
-            players[0]->advance();
-        }
-
-        if (key == GLFW_KEY_LEFT)
-        {
-            players[1]->steerLeft();
-        }
-        else if (key == GLFW_KEY_RIGHT)
-        {
-            players[1]->steerRight();
-        }
-        else if (key == GLFW_KEY_UP)
-        {
-            players[1]->advance();
-        }
     }
 
-    void onKeyUp(int key) override
+    void onKeyUp(int) override
     {
-        if (players.size() < 2 || players[0] == nullptr || players[1] == nullptr)
-            return;
-
-        if (key == GLFW_KEY_A || key == GLFW_KEY_D)
-        {
-            players[0]->releaseSteering();
-        }
-        else if (key == GLFW_KEY_W)
-        {
-            players[0]->halt();
-        }
-        if (key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT)
-        {
-            players[1]->releaseSteering();
-        }
-        else if (key == GLFW_KEY_UP)
-        {
-            players[1]->halt();
-        }
     }
 
     void onScroll(double, double yoffset) override
@@ -223,73 +95,12 @@ public:
         shadow = loadShader("shadow");
 
         const auto levelMeshes = loadMeshes("assets/gltf/wall-and-floor.gltf");
-        const auto tenkMeshes = loadMeshes("assets/gltf/tenk7.gltf");
 
-        meshGroups.resize(3);
+        meshGroups.resize(1);
         meshGroups[0].push_back(levelMeshes.at("Floor"));
-        meshGroups[1].push_back(levelMeshes.at("Wall"));
-        meshGroups[2].push_back(tenkMeshes.at("Tenk"));
 
-        glfwSwapInterval(1);
+        entities.push_back({{0, 0, 0}, 0, 0, glm::vec3{0.5, 0.5, 0.5}});
 
-        const auto [width, height] = window.framebufferSize();
-        glViewport(0, 0, width, height);
-
-        const char *playField = "********************************\n"
-                                "*                              *\n"
-                                "*                              *\n"
-                                "*              **              *\n"
-                                "*              **              *\n"
-                                "*              **              *\n"
-                                "*    **                  **    *\n"
-                                "*     *                  *     *\n"
-                                "*  T  *   ***      ***   *  T  *\n"
-                                "*     *   ***      ***   *     *\n"
-                                "*     *                  *     *\n"
-                                "*    **                  **    *\n"
-                                "*              **              *\n"
-                                "*              **              *\n"
-                                "*              **              *\n"
-                                "*                              *\n"
-                                "*                              *\n"
-                                "********************************";
-
-        std::stringstream stream(playField);
-        std::string line;
-
-        int row = 0;
-        int maxCol = -1;
-        while (std::getline(stream, line, '\n'))
-        {
-            int col = 0;
-            for (const auto &character : line)
-            {
-                size_t idx = character == '*' ? 1 : 0;
-                glm::vec3 color = character == '*' ? WALL_COLOR : FLOOR_COLOR;
-                entities.push_back({{col, 0, row}, 0, idx, color});
-
-                // If there's a T also put a tank, cause why not
-                if (character == 'T')
-                {
-                    entities.push_back({{col, 0, row}, 0, 2, TANK_COLORS[nextTankColor++ % 2]});
-                }
-
-                col++;
-            }
-            maxCol = std::max(maxCol, col);
-            row++;
-        }
-
-        for (auto &entity : entities)
-        {
-            entity.position.x -= maxCol / 2;
-            entity.position.z -= row / 2;
-
-            if (entity.meshIndex == 2)
-            {
-                players.emplace_back(std::make_shared<Tank>(&entity));
-            }
-        }
         camera.fieldOfVision = 42.0f;
 
         // Init shadow mapping bits
@@ -314,30 +125,11 @@ public:
 
     void update() override
     {
-        for (auto &player : players)
-        {
-            player->update();
-        }
-
-        glm::vec3 midPoint = (players[0]->position() + players[1]->position()) / 2.0f;
-        float tankDist = glm::distance(players[0]->position(), players[1]->position());
-
-        glm::vec3 movementDirection = midPoint - cameraTarget;
-        cameraVelocity += movementDirection * .001f;
-
-        cameraVelocity += -cameraVelocity * .1f;
-        cameraTarget += cameraVelocity;
-
-        float distTarget = MIN_DIST + (MAX_DIST - MIN_DIST) * (tankDist / 25.0f);
-        distVelocity += (distTarget - dist) * .005;
-
-        distVelocity += -distVelocity * .1f;
-        dist += distVelocity;
     }
 
     void display() override
     {
-        glm::vec3 lightDir = glm::mat3(glm::yawPitchRoll(lightTheta, lightPitch, 0.0f)) * glm::vec3{0, 0, -1.0};
+        glm::vec3 lightDir = glm::normalize(glm::vec3{0.5, 1, 0.25});
 
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -392,7 +184,7 @@ public:
         window.clear({0.1f, 0.1f, 0.1f, 1.0f});
 
         camera.position = glm::mat3(glm::yawPitchRoll(theta, pitch, 0.0f)) * glm::vec3{0, 0, -dist};
-        glm::mat4 view = camera.lookAtMatrix(cameraTarget);
+        glm::mat4 view = camera.lookAtMatrix(glm::vec3{0});
         glm::mat4 projection = camera.projectionMatrix();
 
         glm::vec3 LightDirection = glm::mat3(view) * lightDir;
@@ -451,25 +243,17 @@ private:
 
     std::vector<std::vector<Mesh>> meshGroups;
 
-    std::vector<std::shared_ptr<Tank>> players;
-
+    Camera camera;
     float pitch = 0.955591;
     float theta = 2.90973;
-    float dist = 25.1983;
-    float distVelocity = 0;
+    float dist = 10.1983;
 
     double last_xpos = 0;
     double last_ypos = 0;
     bool move_camera = false;
 
-    Camera camera;
-    glm::vec3 cameraTarget{0};
-    glm::vec3 cameraVelocity{0};
-
     glm::vec3 ambient{87.0f / 255.0f, 57.0 / 255.0f, 129.0f / 255.0f};
 
-    float lightPitch = 2.119;
-    float lightTheta = 0.839;
     float specularPower = 32.0f;
     float specularStrength = 1.0f;
 

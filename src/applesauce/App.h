@@ -18,7 +18,7 @@ public:
     {
     }
     virtual void init() = 0;
-    virtual void update() {};
+    virtual void update(){};
     virtual void display() = 0;
     virtual void cleanUp() {}
 
@@ -46,6 +46,8 @@ private:
             window.show();
         }
         init();
+
+        glfwSwapInterval(1);
 
         while (!window.shouldClose())
         {
