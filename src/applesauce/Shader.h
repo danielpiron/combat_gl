@@ -6,6 +6,7 @@
 #include <glm/mat4x4.hpp>
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -255,3 +256,5 @@ private:
     Stage fragment_stage;
     std::string stage_error_log;
 };
+
+std::shared_ptr<Shader> loadShader(const char *name);
