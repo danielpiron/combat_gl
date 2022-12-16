@@ -37,9 +37,9 @@ public:
     struct Entity
     {
         glm::vec3 position;
-        float angle;
-        size_t meshIndex;
-        glm::vec3 color;
+        std::shared_ptr<applesauce::VertexArray> vertexArray;
+        std::shared_ptr<applesauce::Buffer> indexBuffer;
+        int elementCount;
     };
 
 public:
@@ -94,12 +94,84 @@ public:
         shader = loadShader("basic");
         shadow = loadShader("shadow");
 
-        const auto levelMeshes = loadMeshes("assets/gltf/wall-and-floor.gltf");
+        // Plane
+        //
+        //  (-0.5, 0, -0.5)   (0.5, 0, -0.5)
+        // -Z          2-----3
+        //  ^          | \ B |
+        //  |          | A \ |
+        //  |          0-----1
+        //  (-0.5, 0, 0.5)    (0.5, 0, 0.5)
+        //      ----> +X
+        //
+        // Triangle indicies:
+        //   A. 0, 1, 2
+        //   B. 1, 3, 2
 
-        meshGroups.resize(1);
-        meshGroups[0].push_back(levelMeshes.at("Floor"));
+        std::vector<glm::vec3> vertices{
+            {-0.5f, 0, 0.5f},  // 0
+            {0.5f, 0, 0.5f},   // 1
+            {-0.5f, 0, -0.5f}, // 2
+            {0.5f, 0, -0.5f},  // 3
+        };
 
-        entities.push_back({{0, 0, 0}, 0, 0, glm::vec3{0.5, 0.5, 0.5}});
+        // Normals all face "up"
+        std::vector<glm::vec3> normals{
+            {0, 1.0f, 0}, // up
+            {0, 1.0f, 0}, // up
+            {0, 1.0f, 0}, // up
+            {0, 1.0f, 0}, // and up
+        };
+
+        std::vector<glm::vec2> texcoords{
+            {0, 1}, // 0 - Near left
+            {1, 1}, // 1 - Near right
+            {0, 0}, // 2 - Far left
+            {1, 0}, // 3 - Far Right
+        };
+
+        std::vector<uint16_t> indices{
+            0, 1, 2, // Triangle A
+            1, 3, 2, // Triangle B
+        };
+
+        const int verticesByteCount = sizeof(vertices[0]) * vertices.size();
+        const int normalsByteCount = sizeof(normals[0]) * normals.size();
+        const int texcoordsByteCount = sizeof(texcoords[0]) * texcoords.size();
+        const int indicesByteCount = sizeof(indices[0]) * indices.size();
+
+        auto vertexBuffer = std::make_shared<applesauce::Buffer>(verticesByteCount + normalsByteCount + texcoordsByteCount, applesauce::Buffer::Target::vertex_array);
+        auto indexBuffer = std::make_shared<applesauce::Buffer>(indicesByteCount, applesauce::Buffer::Target::element_array);
+
+        { // Set up Vertex Buffer
+            vertexBuffer->bind();
+            uint8_t *ptr = reinterpret_cast<uint8_t *>(vertexBuffer->map());
+            std::memcpy(ptr, &vertices[0], verticesByteCount);
+            std::memcpy(ptr + verticesByteCount, &normals[0], normalsByteCount);
+            std::memcpy(ptr + verticesByteCount + normalsByteCount, &texcoords[0], texcoordsByteCount);
+            vertexBuffer->unmap();
+            vertexBuffer->unbind();
+        }
+
+        { // Set up IndexBuffer
+            indexBuffer->bind();
+            uint8_t *ptr = reinterpret_cast<uint8_t *>(indexBuffer->map());
+            std::memcpy(ptr, &indices[0], indicesByteCount);
+            indexBuffer->unmap();
+            indexBuffer->unbind();
+        }
+
+        auto vertexArray = std::make_shared<applesauce::VertexArray>();
+
+        applesauce::VertexBufferDescription desc{
+            {applesauce::VertexAttribute::position, 3, 0, 0},
+            {applesauce::VertexAttribute::normal, 3, verticesByteCount, 0},
+            {applesauce::VertexAttribute::texcoord, 2, verticesByteCount + normalsByteCount, 0},
+        };
+
+        vertexArray->addVertexBuffer(*vertexBuffer, desc);
+
+        entities.push_back({glm::vec3{0, 0, 0}, vertexArray, indexBuffer, static_cast<int>(indices.size())});
 
         camera.fieldOfVision = 42.0f;
 
@@ -152,21 +224,14 @@ public:
             {
                 auto model = glm::mat4(1.0);
                 model = glm::translate(model, entity.position);
-                model = glm::rotate(model, entity.angle, glm::vec3(0, 1, 0));
 
                 glm::mat4 MVPMatrix = lightSpaceMatrix * model;
 
                 shadow->set("MVPMatrix", MVPMatrix);
 
-                for (const auto &mesh : meshGroups[entity.meshIndex])
-                {
-                    for (const auto &submesh : mesh.submeshes)
-                    {
-                        submesh.array->bind();
-                        submesh.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
-                        glDrawElements(GL_TRIANGLES, submesh.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(submesh.indexBufferByteOffset));
-                    }
-                }
+                entity.vertexArray->bind();
+                entity.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
+                glDrawElements(GL_TRIANGLES, entity.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
             }
         }
 
@@ -193,7 +258,6 @@ public:
         {
             auto model = glm::mat4(1.0);
             model = glm::translate(model, entity.position);
-            model = glm::rotate(model, entity.angle, glm::vec3(0, 1, 0));
 
             glm::mat4 modelView = view * model;
             glm::mat3 normalMatrix = glm::mat3(modelView);
@@ -205,26 +269,17 @@ public:
             shader->set("ModelViewMatrix", modelView);
             shader->set("LightViewMatrix", LightViewMatrix);
             shader->set("NormalMatrix", normalMatrix);
-            shader->set("Color", entity.color);
+            shader->set("Color", glm::vec3(0.5, 0.5, 0.5));
             shader->set("Ambient", ambient);
             shader->set("LightColor", glm::vec3{1.0, 1.0, 1.0});
             shader->set("LightDirection", LightDirection);
             shader->set("SpecularPower", specularPower);
             shader->set("SpecularStrength", specularStrength);
 
-            for (const auto &mesh : meshGroups[entity.meshIndex])
-            {
-                for (const auto &submesh : mesh.submeshes)
-                {
-                    submesh.array->bind();
-                    submesh.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
-                    glDrawElements(GL_TRIANGLES, submesh.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(submesh.indexBufferByteOffset));
-                }
-            }
+            entity.vertexArray->bind();
+            entity.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
+            glDrawElements(GL_TRIANGLES, entity.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
         }
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
     }
 
     void cleanUp() override
@@ -240,8 +295,6 @@ private:
     std::shared_ptr<Shader> shadow;
 
     std::vector<Entity> entities;
-
-    std::vector<std::vector<Mesh>> meshGroups;
 
     Camera camera;
     float pitch = 0.955591;
