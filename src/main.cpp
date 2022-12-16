@@ -150,11 +150,12 @@ public:
         //   A. 0, 1, 2
         //   B. 1, 3, 2
 
+        float planeSize = 20.0f;
         std::vector<glm::vec3> vertices{
-            {-0.5f, 0, 0.5f},  // 0
-            {0.5f, 0, 0.5f},   // 1
-            {-0.5f, 0, -0.5f}, // 2
-            {0.5f, 0, -0.5f},  // 3
+            {-planeSize, 0, planeSize},  // 0
+            {planeSize, 0, planeSize},   // 1
+            {-planeSize, 0, -planeSize}, // 2
+            {planeSize, 0, -planeSize},  // 3
         };
 
         // Normals all face "up"
@@ -165,11 +166,12 @@ public:
             {0, 1.0f, 0}, // and up
         };
 
+        float textSize = 20;
         std::vector<glm::vec2> texcoords{
-            {0, 1}, // 0 - Near left
-            {1, 1}, // 1 - Near right
-            {0, 0}, // 2 - Far left
-            {1, 0}, // 3 - Far Right
+            {0, textSize},        // 0 - Near left
+            {textSize, textSize}, // 1 - Near right
+            {0, 0},               // 2 - Far left
+            {textSize, 0},        // 3 - Far Right
         };
 
         std::vector<uint16_t> indices{
