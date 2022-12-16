@@ -16,3 +16,6 @@
 [submodule "deps/json"]
 	path = deps/json
 	url = https://github.com/nlohmann/json.git
+[submodule "deps/libpng"]
+	path = deps/libpng
+	url = https://github.com/glennrp/libpng.git

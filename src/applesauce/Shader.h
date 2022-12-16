@@ -232,6 +232,12 @@ public:
         glUniform1f(loc, value);
     }
 
+    void set(const char *name, const int value)
+    {
+        const auto loc = glGetUniformLocation(glId(), name);
+        glUniform1i(loc, value);
+    }
+
     void use() const
     {
         glUseProgram(glId());

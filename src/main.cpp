@@ -16,6 +16,8 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
+#include <png.h>
+
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
@@ -27,6 +29,44 @@
 #include <vector>
 
 static constexpr unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
+GLuint try_png(const char *filename)
+{
+    png_image image;
+
+    /* Only the image structure version number needs to be set. */
+    std::memset(&image, 0, sizeof image);
+    image.version = PNG_IMAGE_VERSION;
+
+    if (png_image_begin_read_from_file(&image, filename))
+    {
+        image.format = PNG_FORMAT_RGBA;
+        auto buffer = reinterpret_cast<png_bytep>(malloc(PNG_IMAGE_SIZE(image)));
+
+        if (png_image_finish_read(&image, NULL /*background*/, buffer, 0 /*row_stride*/,
+                                  NULL /*colormap for PNG_FORMAT_FLAG_COLORMAP */))
+        {
+            GLuint texture = 0;
+            glGenTextures(1, &texture);
+            glBindTexture(GL_TEXTURE_2D, texture);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+            std::cout << "Texture Dimensions: " << image.width << "x" << image.height << std::endl;
+
+            auto ptr = reinterpret_cast<GLubyte *>(buffer);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(image.width),
+                         static_cast<GLsizei>(image.height), 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
+
+            std::cout << "Texture loaded" << std::endl;
+
+            glBindTexture(GL_TEXTURE_2D, 0);
+            return texture;
+        }
+    }
+    return 0;
+}
 
 class Triangles : public App,
                   public Window::ScrollHandler,
@@ -93,6 +133,8 @@ public:
         // Loads from assets/shaders/basic.fs.glsl and assets/shaders/basic.vs.glsl
         shader = loadShader("basic");
         shadow = loadShader("shadow");
+
+        checkerTexture = try_png("assets/textures/Checker.png");
 
         // Plane
         //
@@ -242,6 +284,9 @@ public:
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, depthMap);
 
+        glActiveTexture(GL_TEXTURE0 + 1);
+        glBindTexture(GL_TEXTURE_2D, checkerTexture);
+
         const auto [width, height] = window.framebufferSize();
         camera.viewport = {width, height};
         glViewport(0, 0, width, height);
@@ -276,6 +321,9 @@ public:
             shader->set("SpecularPower", specularPower);
             shader->set("SpecularStrength", specularStrength);
 
+            shader->set("shadowMap", 0);
+            shader->set("albedo", 1);
+
             entity.vertexArray->bind();
             entity.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
             glDrawElements(GL_TRIANGLES, entity.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
@@ -309,6 +357,8 @@ private:
 
     float specularPower = 32.0f;
     float specularStrength = 1.0f;
+
+    GLuint checkerTexture;
 
     // Shadow map bits
     GLuint depthMapFBO;

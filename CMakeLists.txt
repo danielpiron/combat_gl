@@ -43,8 +43,8 @@ set(IMGUI_SOURCES ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR
 #     set(ZLIB_LIBRARIES ${PROJECT_BINARY_DIR}/deps/zlib/Debug/zlibstaticd.lib)
 # endif()
 
-# set(PNG_TESTS OFF CACHE BOOL "Build libpng tests" FORCE)
-# add_subdirectory(deps/libpng)
+set(PNG_TESTS OFF CACHE BOOL "Build libpng tests" FORCE)
+add_subdirectory(deps/libpng)
 
 
 add_executable(combat_gl src/main.cpp ${APPLESAUCE_FILES} ${IMGUI_SOURCES})
@@ -52,7 +52,7 @@ target_link_libraries(combat_gl
  glfw
  glad
  nlohmann_json
-# png_static
+ png_static
  )
 
 target_compile_options(combat_gl PUBLIC ${COMPILER_FLAGS})
@@ -62,8 +62,8 @@ target_include_directories(combat_gl SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/d
 target_include_directories(combat_gl SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/glm)
 target_include_directories(combat_gl SYSTEM PUBLIC ${IMGUI_DIR})
 target_include_directories(combat_gl SYSTEM PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/backends)
-# target_include_directories(combat_gl SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/libpng)
-# target_include_directories(combat_gl SYSTEM PUBLIC ${PROJECT_BINARY_DIR}/deps/libpng)
+target_include_directories(combat_gl SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/deps/libpng)
+target_include_directories(combat_gl SYSTEM PUBLIC ${PROJECT_BINARY_DIR}/deps/libpng)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/basic.vs.glsl assets/shaders/basic.vs.glsl COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/basic.fs.glsl assets/shaders/basic.fs.glsl COPYONLY)
@@ -74,3 +74,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/quad.fs.glsl assets/sh
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/tenk6a.gltf assets/gltf/tenk6a.gltf COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/tenk7.gltf assets/gltf/tenk7.gltf COPYONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/wall-and-floor.gltf" "assets/gltf/wall-and-floor.gltf" COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/textures/Checker.png assets/textures/Checker.png COPYONLY)

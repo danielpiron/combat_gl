@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 
 static std::string readFileText(const char *filename)
 {
@@ -27,6 +28,7 @@ std::shared_ptr<Shader> loadShader(const char *name)
 
     if (!shader->compile_and_link())
     {
+        std::cout << shader->error_log() << std::endl;
         return nullptr;
     }
 

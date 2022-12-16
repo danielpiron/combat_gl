@@ -9,9 +9,11 @@ uniform float SpecularPower;
 uniform float SpecularStrength;
 
 uniform sampler2D shadowMap;
+uniform sampler2D albedo;
 
 in vec3 normal;
 in vec3 position;
+in vec2 texcoords;
 in vec3 fragPos;
 in vec4 lightSpacePosition;
 out vec4 fColor;
@@ -50,7 +52,8 @@ void main() {
     float specular = pow(max(dot(viewDir, reflectDir), 0.0), SpecularPower);
     vec3 reflectedLight = SpecularStrength * specular * LightColor;
 
-    vec3 rgb = min(Color * scatteredLight + reflectedLight * (1.0 - shadow), vec3(1.0));
+    vec3 alColor = texture(albedo, texcoords).rgb;
+    vec3 rgb = min(alColor * scatteredLight + reflectedLight * (1.0 - shadow), vec3(1.0));
 
     fColor = vec4(rgb, 1.0);
 }
