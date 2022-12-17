@@ -128,6 +128,8 @@ public:
         glm::quat orientation;
         std::shared_ptr<Mesh> mesh;
         GLuint textureId;
+
+        glm::mat4 modelMatrix;
     };
 
 public:
@@ -191,7 +193,7 @@ public:
         auto box = std::make_shared<Mesh>(makeBoxMesh(1.0f));
         auto plane = std::make_shared<Mesh>(makePlaneMesh(20));
 
-        entities.push_back({glm::vec3{0}, glm::quat{}, plane, checkerTexture});
+        entities.push_back({glm::vec3{0}, glm::quat{}, plane, checkerTexture, glm::mat4{1.0f}});
 
         int numberOfObjects = 20;
         float radius = 5.0f;
@@ -204,7 +206,7 @@ public:
             glm::vec3 position{x, 0.5, z};
 
             glm::quat orientation{glm::vec3{0, -angle, 0}};
-            entities.push_back({position, orientation, box, whiteSquareTexture});
+            entities.push_back({position, orientation, box, whiteSquareTexture, glm::mat4{1.0f}});
         }
 
         // Init shadow mapping bits
@@ -232,6 +234,11 @@ public:
 
     void update() override
     {
+        for (auto &entity : entities)
+        {
+            // Update modelMatrix of all entities in preparation for render
+            entity.modelMatrix = glm::translate(glm::mat4{1.0f}, entity.position) * glm::mat4(entity.orientation);
+        }
     }
 
     void display() override
@@ -260,11 +267,7 @@ public:
 
             for (const auto &entity : entities)
             {
-                auto model = glm::mat4(1.0);
-                model = glm::translate(model, entity.position);
-                model *= glm::mat4(entity.orientation);
-
-                glm::mat4 MVPMatrix = lightSpaceMatrix * model;
+                glm::mat4 MVPMatrix = lightSpaceMatrix * entity.modelMatrix;
 
                 shadow->set("MVPMatrix", MVPMatrix);
 
@@ -303,15 +306,11 @@ public:
 
         for (const auto &entity : entities)
         {
-            auto model = glm::mat4(1.0);
-            model = glm::translate(model, entity.position);
-            model *= glm::mat4(entity.orientation);
-
-            glm::mat4 modelView = view * model;
+            glm::mat4 modelView = view * entity.modelMatrix;
             glm::mat3 normalMatrix = glm::mat3(modelView);
 
             glm::mat4 MVPMatrix = projection * modelView;
-            glm::mat4 LightViewMatrix = shadowMatrix * model;
+            glm::mat4 LightViewMatrix = shadowMatrix * entity.modelMatrix;
 
             shader->set("MVPMatrix", MVPMatrix);
             shader->set("ModelViewMatrix", modelView);
