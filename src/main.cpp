@@ -5,7 +5,7 @@
 #include "applesauce/VertexArray.h"
 #include "applesauce/Shader.h"
 #include "applesauce/Camera.h"
-#include "applesauce/Mesh.h"
+// #include "applesauce/Mesh.h"
 
 #define GLM_SWIZZLE
 #include <glm/gtc/matrix_transform.hpp>
@@ -28,7 +28,99 @@
 #include <sstream>
 #include <vector>
 
-static constexpr unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+struct Mesh
+{
+    std::shared_ptr<applesauce::VertexArray> vertexArray;
+    std::shared_ptr<applesauce::Buffer> indexBuffer;
+    int elementCount;
+};
+
+Mesh makePlaneMesh(float planeSize)
+{
+    // Plane
+    //
+    //  (-0.5, 0, -0.5)   (0.5, 0, -0.5)
+    // -Z          2-----3
+    //  ^          | \ B |
+    //  |          | A \ |
+    //  |          0-----1
+    //  (-0.5, 0, 0.5)    (0.5, 0, 0.5)
+    //      ----> +X
+    //
+    // Triangle indicies:
+    //   A. 0, 1, 2
+    //   B. 1, 3, 2
+
+    float halfSize = planeSize / 2.0f;
+    std::vector<glm::vec3> vertices{
+        {-halfSize, 0, halfSize},  // 0
+        {halfSize, 0, halfSize},   // 1
+        {-halfSize, 0, -halfSize}, // 2
+        {halfSize, 0, -halfSize},  // 3
+    };
+
+    // Normals all face "up"
+    std::vector<glm::vec3> normals{
+        {0, 1.0f, 0}, // up
+        {0, 1.0f, 0}, // up
+        {0, 1.0f, 0}, // up
+        {0, 1.0f, 0}, // and up
+    };
+
+    float uvSize = halfSize;
+    std::vector<glm::vec2> texcoords{
+        {0, uvSize},      // 0 - Near left
+        {uvSize, uvSize}, // 1 - Near right
+        {0, 0},           // 2 - Far left
+        {uvSize, 0},      // 3 - Far Right
+    };
+
+    std::vector<uint16_t> indices{
+        0, 1, 2, // Triangle A
+        1, 3, 2, // Triangle B
+    };
+
+    const int verticesByteCount = sizeof(vertices[0]) * vertices.size();
+    const int normalsByteCount = sizeof(normals[0]) * normals.size();
+    const int texcoordsByteCount = sizeof(texcoords[0]) * texcoords.size();
+    const int indicesByteCount = sizeof(indices[0]) * indices.size();
+
+    auto vertexBuffer = std::make_shared<applesauce::Buffer>(verticesByteCount + normalsByteCount + texcoordsByteCount, applesauce::Buffer::Target::vertex_array);
+    auto indexBuffer = std::make_shared<applesauce::Buffer>(indicesByteCount, applesauce::Buffer::Target::element_array);
+
+    { // Set up Vertex Buffer
+        vertexBuffer->bind();
+        uint8_t *ptr = reinterpret_cast<uint8_t *>(vertexBuffer->map());
+        std::memcpy(ptr, &vertices[0], verticesByteCount);
+        std::memcpy(ptr + verticesByteCount, &normals[0], normalsByteCount);
+        std::memcpy(ptr + verticesByteCount + normalsByteCount, &texcoords[0], texcoordsByteCount);
+        vertexBuffer->unmap();
+        vertexBuffer->unbind();
+    }
+
+    { // Set up IndexBuffer
+        indexBuffer->bind();
+        uint8_t *ptr = reinterpret_cast<uint8_t *>(indexBuffer->map());
+        std::memcpy(ptr, &indices[0], indicesByteCount);
+        indexBuffer->unmap();
+        indexBuffer->unbind();
+    }
+
+    auto vertexArray = std::make_shared<applesauce::VertexArray>();
+
+    applesauce::VertexBufferDescription desc{
+        {applesauce::VertexAttribute::position, 3, 0, 0},
+        {applesauce::VertexAttribute::normal, 3, verticesByteCount, 0},
+        {applesauce::VertexAttribute::texcoord, 2, verticesByteCount + normalsByteCount, 0},
+    };
+
+    vertexArray->addVertexBuffer(*vertexBuffer, desc);
+
+    return {vertexArray, indexBuffer, static_cast<int>(indices.size())};
+}
+
+static constexpr unsigned int SHADOW_WIDTH = 1024,
+                              SHADOW_HEIGHT = 1024;
 
 GLuint try_png(const char *filename)
 {
@@ -78,9 +170,7 @@ public:
     struct Entity
     {
         glm::vec3 position;
-        std::shared_ptr<applesauce::VertexArray> vertexArray;
-        std::shared_ptr<applesauce::Buffer> indexBuffer;
-        int elementCount;
+        std::shared_ptr<Mesh> mesh;
     };
 
 public:
@@ -137,88 +227,10 @@ public:
 
         checkerTexture = try_png("assets/textures/Checker.png");
 
-        // Plane
-        //
-        //  (-0.5, 0, -0.5)   (0.5, 0, -0.5)
-        // -Z          2-----3
-        //  ^          | \ B |
-        //  |          | A \ |
-        //  |          0-----1
-        //  (-0.5, 0, 0.5)    (0.5, 0, 0.5)
-        //      ----> +X
-        //
-        // Triangle indicies:
-        //   A. 0, 1, 2
-        //   B. 1, 3, 2
-
-        float planeSize = 20.0f;
-        std::vector<glm::vec3> vertices{
-            {-planeSize, 0, planeSize},  // 0
-            {planeSize, 0, planeSize},   // 1
-            {-planeSize, 0, -planeSize}, // 2
-            {planeSize, 0, -planeSize},  // 3
-        };
-
-        // Normals all face "up"
-        std::vector<glm::vec3> normals{
-            {0, 1.0f, 0}, // up
-            {0, 1.0f, 0}, // up
-            {0, 1.0f, 0}, // up
-            {0, 1.0f, 0}, // and up
-        };
-
-        float textSize = 20;
-        std::vector<glm::vec2> texcoords{
-            {0, textSize},        // 0 - Near left
-            {textSize, textSize}, // 1 - Near right
-            {0, 0},               // 2 - Far left
-            {textSize, 0},        // 3 - Far Right
-        };
-
-        std::vector<uint16_t> indices{
-            0, 1, 2, // Triangle A
-            1, 3, 2, // Triangle B
-        };
-
-        const int verticesByteCount = sizeof(vertices[0]) * vertices.size();
-        const int normalsByteCount = sizeof(normals[0]) * normals.size();
-        const int texcoordsByteCount = sizeof(texcoords[0]) * texcoords.size();
-        const int indicesByteCount = sizeof(indices[0]) * indices.size();
-
-        auto vertexBuffer = std::make_shared<applesauce::Buffer>(verticesByteCount + normalsByteCount + texcoordsByteCount, applesauce::Buffer::Target::vertex_array);
-        auto indexBuffer = std::make_shared<applesauce::Buffer>(indicesByteCount, applesauce::Buffer::Target::element_array);
-
-        { // Set up Vertex Buffer
-            vertexBuffer->bind();
-            uint8_t *ptr = reinterpret_cast<uint8_t *>(vertexBuffer->map());
-            std::memcpy(ptr, &vertices[0], verticesByteCount);
-            std::memcpy(ptr + verticesByteCount, &normals[0], normalsByteCount);
-            std::memcpy(ptr + verticesByteCount + normalsByteCount, &texcoords[0], texcoordsByteCount);
-            vertexBuffer->unmap();
-            vertexBuffer->unbind();
-        }
-
-        { // Set up IndexBuffer
-            indexBuffer->bind();
-            uint8_t *ptr = reinterpret_cast<uint8_t *>(indexBuffer->map());
-            std::memcpy(ptr, &indices[0], indicesByteCount);
-            indexBuffer->unmap();
-            indexBuffer->unbind();
-        }
-
-        auto vertexArray = std::make_shared<applesauce::VertexArray>();
-
-        applesauce::VertexBufferDescription desc{
-            {applesauce::VertexAttribute::position, 3, 0, 0},
-            {applesauce::VertexAttribute::normal, 3, verticesByteCount, 0},
-            {applesauce::VertexAttribute::texcoord, 2, verticesByteCount + normalsByteCount, 0},
-        };
-
-        vertexArray->addVertexBuffer(*vertexBuffer, desc);
-
-        entities.push_back({glm::vec3{0, 0, 0}, vertexArray, indexBuffer, static_cast<int>(indices.size())});
-
         camera.fieldOfVision = 42.0f;
+
+        auto plane = std::make_shared<Mesh>(makePlaneMesh(20));
+        entities.push_back({glm::vec3{0}, plane});
 
         // Init shadow mapping bits
 
@@ -274,9 +286,10 @@ public:
 
                 shadow->set("MVPMatrix", MVPMatrix);
 
-                entity.vertexArray->bind();
-                entity.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
-                glDrawElements(GL_TRIANGLES, entity.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
+                auto &mesh = entity.mesh;
+                mesh->vertexArray->bind();
+                mesh->indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
+                glDrawElements(GL_TRIANGLES, mesh->elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
             }
         }
 
@@ -327,9 +340,10 @@ public:
             shader->set("shadowMap", 0);
             shader->set("albedo", 1);
 
-            entity.vertexArray->bind();
-            entity.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
-            glDrawElements(GL_TRIANGLES, entity.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
+            auto &mesh = entity.mesh;
+            mesh->vertexArray->bind();
+            mesh->indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
+            glDrawElements(GL_TRIANGLES, mesh->elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
         }
     }
 
