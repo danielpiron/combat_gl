@@ -33,7 +33,8 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     for (int y = -sampleRadius; y <= sampleRadius; y++) {
         for (int x = -sampleRadius; x <= sampleRadius; x++) {
             float closestDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * pixelSize).r; 
-            if (currentDepth > closestDepth + 0.005) 
+            float bias = max(0.05 * (1.0 - dot(normal, LightDirection)), 0.005); 
+            if (currentDepth > closestDepth + bias) 
                 shadow += 1.0f;
         }
     }
