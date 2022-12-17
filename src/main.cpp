@@ -406,10 +406,13 @@ public:
         glBindTexture(GL_TEXTURE_2D, depthMap);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
                      SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
@@ -431,6 +434,9 @@ public:
         glClear(GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
+
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(2.0f, 4.0f);
 
         static float lightDist = 11.2;
         static float lightSize = 18.0f;
@@ -460,6 +466,7 @@ public:
             }
         }
 
+        glDisable(GL_POLYGON_OFFSET_FILL);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         shader->use();
@@ -479,6 +486,12 @@ public:
 
         glm::vec3 LightDirection = glm::mat3(view) * lightDir;
 
+        // This should have a translate of 0.5 in each coordinate, but instead scale is influencing,
+        // so some ordering is wrong. The 1.0f translate is a hacky fix.
+        glm::mat4 shadowMatrix = glm::translate(glm::scale(glm::mat4{1.0f}, glm::vec3{0.5f}), glm::vec3{1.0f});
+
+        shadowMatrix *= lightSpaceMatrix;
+
         for (const auto &entity : entities)
         {
             auto model = glm::mat4(1.0);
@@ -489,7 +502,7 @@ public:
             glm::mat3 normalMatrix = glm::mat3(modelView);
 
             glm::mat4 MVPMatrix = projection * modelView;
-            glm::mat4 LightViewMatrix = lightSpaceMatrix * model;
+            glm::mat4 LightViewMatrix = shadowMatrix * model;
 
             shader->set("MVPMatrix", MVPMatrix);
             shader->set("ModelViewMatrix", modelView);

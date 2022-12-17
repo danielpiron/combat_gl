@@ -8,7 +8,7 @@ uniform vec3 LightDirection;
 uniform float SpecularPower;
 uniform float SpecularStrength;
 
-uniform sampler2D shadowMap;
+uniform sampler2DShadow shadowMap;
 uniform sampler2D albedo;
 
 in vec3 normal;
@@ -18,6 +18,7 @@ in vec3 fragPos;
 in vec4 lightSpacePosition;
 out vec4 fColor;
 
+/*
 // Pulled right out of LearnOpenGL.com
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
@@ -41,11 +42,13 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 
     return shadow / pow((sampleRadius * 2 + 1), 2);
 }  
+*/
 
 void main() {
-    float shadow = ShadowCalculation(lightSpacePosition); 
+    float shadow = textureProj(shadowMap, lightSpacePosition);
+    // float shadow = ShadowCalculation(lightSpacePosition);
     float diffuse = max(0.0, dot(normal, LightDirection));
-    vec3 scatteredLight = Ambient + LightColor * diffuse * (1.0 - shadow);
+    vec3 scatteredLight = Ambient + LightColor * diffuse * shadow;
 
     vec3 viewDir = normalize(-position);
     vec3 reflectDir = reflect(-LightDirection, normal);
@@ -54,7 +57,7 @@ void main() {
     vec3 reflectedLight = SpecularStrength * specular * LightColor;
 
     vec3 alColor = texture(albedo, texcoords).rgb;
-    vec3 rgb = min(alColor * scatteredLight + reflectedLight * (1.0 - shadow), vec3(1.0));
+    vec3 rgb = min(alColor * scatteredLight + reflectedLight * shadow, vec3(1.0));
 
     fColor = vec4(rgb, 1.0);
 }
