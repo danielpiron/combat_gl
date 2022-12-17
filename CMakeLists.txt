@@ -75,3 +75,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/tenk6a.gltf assets/gltf/t
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/tenk7.gltf assets/gltf/tenk7.gltf COPYONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/wall-and-floor.gltf" "assets/gltf/wall-and-floor.gltf" COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/textures/Checker.png assets/textures/Checker.png COPYONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/assets/textures/White Square.png" "assets/textures/White Square.png" COPYONLY)

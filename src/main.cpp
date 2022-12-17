@@ -143,7 +143,7 @@ Mesh makeBoxMesh(float boxSize)
     //
     //
 
-    const float hSize = boxSize;
+    const float hSize = boxSize / 2.0f;
     std::vector<glm::vec3> corner{
         // Near corners
         {-hSize, -hSize, hSize}, // 0
@@ -317,6 +317,7 @@ public:
     {
         glm::vec3 position;
         std::shared_ptr<Mesh> mesh;
+        GLuint textureId;
     };
 
 public:
@@ -372,11 +373,28 @@ public:
         shadow = loadShader("shadow");
 
         checkerTexture = try_png("assets/textures/Checker.png");
+        whiteSquareTexture = try_png("assets/textures/White Square.png");
 
         camera.fieldOfVision = 42.0f;
 
-        auto plane = std::make_shared<Mesh>(makeBoxMesh(1));
-        entities.push_back({glm::vec3{0}, plane});
+        auto box = std::make_shared<Mesh>(makeBoxMesh(1.0f));
+        auto plane = std::make_shared<Mesh>(makePlaneMesh(20));
+
+        entities.push_back({glm::vec3{0}, plane, checkerTexture});
+
+        int numberOfObjects = 20;
+        float radius = 5.0f;
+
+        for (int i = 0; i < numberOfObjects; i++)
+        {
+            float angle = i * M_PI * 2 / numberOfObjects;
+            float x = cosf(angle) * radius;
+            float z = sinf(angle) * radius;
+            glm::vec3 position{x, 0.5, z};
+            // float angleDegrees = -angle * Mathf.Rad2Deg;
+            // Quaternion rot = Quaternion.Euler(0, angleDegrees, 0);
+            entities.push_back({position, box, whiteSquareTexture});
+        }
 
         // Init shadow mapping bits
 
@@ -446,9 +464,6 @@ public:
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, depthMap);
 
-        glActiveTexture(GL_TEXTURE0 + 1);
-        glBindTexture(GL_TEXTURE_2D, checkerTexture);
-
         const auto [width, height] = window.framebufferSize();
         camera.viewport = {width, height};
         glViewport(0, 0, width, height);
@@ -486,6 +501,9 @@ public:
             shader->set("shadowMap", 0);
             shader->set("albedo", 1);
 
+            glActiveTexture(GL_TEXTURE0 + 1);
+            glBindTexture(GL_TEXTURE_2D, entity.textureId);
+
             auto &mesh = entity.mesh;
             mesh->vertexArray->bind();
             mesh->indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
@@ -522,6 +540,7 @@ private:
     float specularStrength = 1.0f;
 
     GLuint checkerTexture;
+    GLuint whiteSquareTexture;
 
     // Shadow map bits
     GLuint depthMapFBO;
