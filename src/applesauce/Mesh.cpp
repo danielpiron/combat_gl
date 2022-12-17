@@ -1,3 +1,4 @@
+/*
 #include "Mesh.h"
 
 #include <util/gltf.h>
@@ -10,6 +11,7 @@ static std::string readFileText(const char *filename)
     std::ifstream f{filename};
     return std::string(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
 }
+
 
 static applesauce::VertexAttribute vertexAttribFromName(const std::string &name)
 {
@@ -79,3 +81,4 @@ std::unordered_map<std::string, Mesh> loadMeshes(const char *filename)
 
     return result;
 }
+*/

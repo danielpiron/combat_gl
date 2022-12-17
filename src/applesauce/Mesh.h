@@ -1,3 +1,4 @@
+/*
 #pragma once
 
 #include "VertexArray.h"
@@ -23,3 +24,4 @@ struct Mesh
 };
 
 std::unordered_map<std::string, Mesh> loadMeshes(const char *filename);
+*/
