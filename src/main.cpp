@@ -9,6 +9,7 @@
 
 #define GLM_SWIZZLE
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -316,6 +317,7 @@ public:
     struct Entity
     {
         glm::vec3 position;
+        glm::quat orientation;
         std::shared_ptr<Mesh> mesh;
         GLuint textureId;
     };
@@ -375,12 +377,12 @@ public:
         checkerTexture = try_png("assets/textures/Checker.png");
         whiteSquareTexture = try_png("assets/textures/White Square.png");
 
-        camera.fieldOfVision = 42.0f;
+        camera.fieldOfVision = 60.0f;
 
         auto box = std::make_shared<Mesh>(makeBoxMesh(1.0f));
         auto plane = std::make_shared<Mesh>(makePlaneMesh(20));
 
-        entities.push_back({glm::vec3{0}, plane, checkerTexture});
+        entities.push_back({glm::vec3{0}, glm::quat{}, plane, checkerTexture});
 
         int numberOfObjects = 20;
         float radius = 5.0f;
@@ -391,9 +393,9 @@ public:
             float x = cosf(angle) * radius;
             float z = sinf(angle) * radius;
             glm::vec3 position{x, 0.5, z};
-            // float angleDegrees = -angle * Mathf.Rad2Deg;
-            // Quaternion rot = Quaternion.Euler(0, angleDegrees, 0);
-            entities.push_back({position, box, whiteSquareTexture});
+
+            glm::quat orientation{glm::vec3{0, -angle, 0}};
+            entities.push_back({position, orientation, box, whiteSquareTexture});
         }
 
         // Init shadow mapping bits
@@ -445,6 +447,7 @@ public:
             {
                 auto model = glm::mat4(1.0);
                 model = glm::translate(model, entity.position);
+                model *= glm::mat4(entity.orientation);
 
                 glm::mat4 MVPMatrix = lightSpaceMatrix * model;
 
@@ -480,6 +483,7 @@ public:
         {
             auto model = glm::mat4(1.0);
             model = glm::translate(model, entity.position);
+            model *= glm::mat4(entity.orientation);
 
             glm::mat4 modelView = view * model;
             glm::mat3 normalMatrix = glm::mat3(modelView);
@@ -534,7 +538,7 @@ private:
     double last_ypos = 0;
     bool move_camera = false;
 
-    glm::vec3 ambient{87.0f / 255.0f, 57.0 / 255.0f, 129.0f / 255.0f};
+    glm::vec3 ambient{0.3, 0.3, 0.3};
 
     float specularPower = 32.0f;
     float specularStrength = 1.0f;
