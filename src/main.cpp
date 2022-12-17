@@ -28,6 +28,8 @@
 #include <memory>
 #include <ostream>
 #include <sstream>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 static unsigned int quadVAO;
@@ -116,22 +118,57 @@ GLuint try_png(const char *filename)
     return 0;
 }
 
+class ResourceManager
+{
+public:
+    virtual std::shared_ptr<Mesh> getMesh(const std::string &) = 0;
+    virtual GLuint getTexture(const std::string &) = 0;
+};
+
+struct Entity
+{
+    glm::vec3 position = glm::vec3{0};
+    glm::quat orientation = glm::quat{};
+    std::shared_ptr<Mesh> mesh = nullptr;
+    GLuint textureId = 0;
+
+    glm::mat4 modelMatrix = glm::mat4{1.0f};
+
+    virtual void init(ResourceManager &) {}
+    virtual void update() {}
+    virtual ~Entity() {}
+};
+
+class Block : public Entity
+{
+    void init(ResourceManager &rm)
+    {
+        mesh = rm.getMesh("Box");
+        textureId = rm.getTexture("White Square");
+    }
+    void update()
+    {
+    }
+};
+
+class Floor : public Entity
+{
+    void init(ResourceManager &rm)
+    {
+        mesh = rm.getMesh("Plane");
+        textureId = rm.getTexture("Checker");
+    }
+    void update()
+    {
+    }
+};
+
 class Triangles : public App,
+                  public ResourceManager,
                   public Window::ScrollHandler,
                   public Window::MouseHandler,
                   public Window::KeyHandler
 {
-public:
-    struct Entity
-    {
-        glm::vec3 position;
-        glm::quat orientation;
-        std::shared_ptr<Mesh> mesh;
-        GLuint textureId;
-
-        glm::mat4 modelMatrix;
-    };
-
 public:
     void onKeyDown(int) override
     {
@@ -174,6 +211,15 @@ public:
         last_ypos = ypos;
     }
 
+    std::shared_ptr<Mesh> getMesh(const std::string &key) override
+    {
+        return meshes[key];
+    }
+    GLuint getTexture(const std::string &key) override
+    {
+        return textures[key];
+    }
+
     void init() override
     {
         window.setScrollHandler(this);
@@ -185,15 +231,13 @@ public:
         shadow = loadShader("shadow");
         quad = loadShader("quad");
 
-        checkerTexture = try_png("assets/textures/Checker.png");
-        whiteSquareTexture = try_png("assets/textures/White Square.png");
+        textures.emplace("Checker", try_png("assets/textures/Checker.png"));
+        textures.emplace("White Square", try_png("assets/textures/White Square.png"));
 
-        camera.fieldOfVision = 60.0f;
+        meshes.emplace("Box", std::make_shared<Mesh>(makeBoxMesh(1.0f)));
+        meshes.emplace("Plane", std::make_shared<Mesh>(makePlaneMesh(20)));
 
-        auto box = std::make_shared<Mesh>(makeBoxMesh(1.0f));
-        auto plane = std::make_shared<Mesh>(makePlaneMesh(20));
-
-        entities.push_back({glm::vec3{0}, glm::quat{}, plane, checkerTexture, glm::mat4{1.0f}});
+        spawn(new Floor());
 
         int numberOfObjects = 20;
         float radius = 5.0f;
@@ -206,7 +250,7 @@ public:
             glm::vec3 position{x, 0.5, z};
 
             glm::quat orientation{glm::vec3{0, -angle, 0}};
-            entities.push_back({position, orientation, box, whiteSquareTexture, glm::mat4{1.0f}});
+            spawn(new Block(), position, orientation);
         }
 
         // Init shadow mapping bits
@@ -237,7 +281,7 @@ public:
         for (auto &entity : entities)
         {
             // Update modelMatrix of all entities in preparation for render
-            entity.modelMatrix = glm::translate(glm::mat4{1.0f}, entity.position) * glm::mat4(entity.orientation);
+            entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
         }
     }
 
@@ -267,11 +311,11 @@ public:
 
             for (const auto &entity : entities)
             {
-                glm::mat4 MVPMatrix = lightSpaceMatrix * entity.modelMatrix;
+                glm::mat4 MVPMatrix = lightSpaceMatrix * entity->modelMatrix;
 
                 shadow->set("MVPMatrix", MVPMatrix);
 
-                auto &mesh = entity.mesh;
+                auto &mesh = entity->mesh;
                 mesh->vertexArray->bind();
                 mesh->indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
                 glDrawElements(GL_TRIANGLES, mesh->elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
@@ -306,11 +350,11 @@ public:
 
         for (const auto &entity : entities)
         {
-            glm::mat4 modelView = view * entity.modelMatrix;
+            glm::mat4 modelView = view * entity->modelMatrix;
             glm::mat3 normalMatrix = glm::mat3(modelView);
 
             glm::mat4 MVPMatrix = projection * modelView;
-            glm::mat4 LightViewMatrix = shadowMatrix * entity.modelMatrix;
+            glm::mat4 LightViewMatrix = shadowMatrix * entity->modelMatrix;
 
             shader->set("MVPMatrix", MVPMatrix);
             shader->set("ModelViewMatrix", modelView);
@@ -327,9 +371,9 @@ public:
             shader->set("shadowMap", 1);
 
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, entity.textureId);
+            glBindTexture(GL_TEXTURE_2D, entity->textureId);
 
-            auto &mesh = entity.mesh;
+            auto &mesh = entity->mesh;
             mesh->vertexArray->bind();
             mesh->indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
             glDrawElements(GL_TRIANGLES, mesh->elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
@@ -354,12 +398,24 @@ public:
         std::cout << "\tDist: " << dist << std::endl;
     }
 
+    void spawn(Entity *entity, const glm::vec3 &position = glm::vec3{0}, const glm::quat &orientation = glm::quat{})
+    {
+        auto e = std::shared_ptr<Entity>(entity);
+        e->init(*this);
+        e->position = position;
+        e->orientation = orientation;
+        entities.emplace_back(e);
+    }
+
 private:
     std::shared_ptr<Shader> shader;
     std::shared_ptr<Shader> shadow;
     std::shared_ptr<Shader> quad;
 
-    std::vector<Entity> entities;
+    std::vector<std::shared_ptr<Entity>> entities;
+
+    std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes;
+    std::unordered_map<std::string, GLuint> textures;
 
     Camera camera;
     float pitch = 0.955591;
@@ -374,9 +430,6 @@ private:
 
     float specularPower = 32.0f;
     float specularStrength = 1.0f;
-
-    GLuint checkerTexture;
-    GLuint whiteSquareTexture;
 
     // Shadow map bits
     GLuint depthMapFBO;
