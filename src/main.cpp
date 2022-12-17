@@ -35,6 +35,50 @@ struct Mesh
     int elementCount;
 };
 
+Mesh meshFromComponents(const std::vector<glm::vec3> &vertices,
+                        const std::vector<glm::vec3> &normals,
+                        const std::vector<glm::vec2> &texcoords,
+                        const std::vector<uint16_t> &indices)
+{
+    const int verticesByteCount = sizeof(vertices[0]) * vertices.size();
+    const int normalsByteCount = sizeof(normals[0]) * normals.size();
+    const int texcoordsByteCount = sizeof(texcoords[0]) * texcoords.size();
+    const int indicesByteCount = sizeof(indices[0]) * indices.size();
+
+    auto vertexBuffer = std::make_shared<applesauce::Buffer>(verticesByteCount + normalsByteCount + texcoordsByteCount, applesauce::Buffer::Target::vertex_array);
+    auto indexBuffer = std::make_shared<applesauce::Buffer>(indicesByteCount, applesauce::Buffer::Target::element_array);
+
+    { // Set up Vertex Buffer
+        vertexBuffer->bind();
+        uint8_t *ptr = reinterpret_cast<uint8_t *>(vertexBuffer->map());
+        std::memcpy(ptr, &vertices[0], verticesByteCount);
+        std::memcpy(ptr + verticesByteCount, &normals[0], normalsByteCount);
+        std::memcpy(ptr + verticesByteCount + normalsByteCount, &texcoords[0], texcoordsByteCount);
+        vertexBuffer->unmap();
+        vertexBuffer->unbind();
+    }
+
+    { // Set up IndexBuffer
+        indexBuffer->bind();
+        uint8_t *ptr = reinterpret_cast<uint8_t *>(indexBuffer->map());
+        std::memcpy(ptr, &indices[0], indicesByteCount);
+        indexBuffer->unmap();
+        indexBuffer->unbind();
+    }
+
+    auto vertexArray = std::make_shared<applesauce::VertexArray>();
+
+    applesauce::VertexBufferDescription desc{
+        {applesauce::VertexAttribute::position, 3, 0, 0},
+        {applesauce::VertexAttribute::normal, 3, verticesByteCount, 0},
+        {applesauce::VertexAttribute::texcoord, 2, verticesByteCount + normalsByteCount, 0},
+    };
+
+    vertexArray->addVertexBuffer(*vertexBuffer, desc);
+
+    return {vertexArray, indexBuffer, static_cast<int>(indices.size())};
+}
+
 Mesh makePlaneMesh(float planeSize)
 {
     // Plane
@@ -79,44 +123,7 @@ Mesh makePlaneMesh(float planeSize)
         0, 1, 2, // Triangle A
         1, 3, 2, // Triangle B
     };
-
-    const int verticesByteCount = sizeof(vertices[0]) * vertices.size();
-    const int normalsByteCount = sizeof(normals[0]) * normals.size();
-    const int texcoordsByteCount = sizeof(texcoords[0]) * texcoords.size();
-    const int indicesByteCount = sizeof(indices[0]) * indices.size();
-
-    auto vertexBuffer = std::make_shared<applesauce::Buffer>(verticesByteCount + normalsByteCount + texcoordsByteCount, applesauce::Buffer::Target::vertex_array);
-    auto indexBuffer = std::make_shared<applesauce::Buffer>(indicesByteCount, applesauce::Buffer::Target::element_array);
-
-    { // Set up Vertex Buffer
-        vertexBuffer->bind();
-        uint8_t *ptr = reinterpret_cast<uint8_t *>(vertexBuffer->map());
-        std::memcpy(ptr, &vertices[0], verticesByteCount);
-        std::memcpy(ptr + verticesByteCount, &normals[0], normalsByteCount);
-        std::memcpy(ptr + verticesByteCount + normalsByteCount, &texcoords[0], texcoordsByteCount);
-        vertexBuffer->unmap();
-        vertexBuffer->unbind();
-    }
-
-    { // Set up IndexBuffer
-        indexBuffer->bind();
-        uint8_t *ptr = reinterpret_cast<uint8_t *>(indexBuffer->map());
-        std::memcpy(ptr, &indices[0], indicesByteCount);
-        indexBuffer->unmap();
-        indexBuffer->unbind();
-    }
-
-    auto vertexArray = std::make_shared<applesauce::VertexArray>();
-
-    applesauce::VertexBufferDescription desc{
-        {applesauce::VertexAttribute::position, 3, 0, 0},
-        {applesauce::VertexAttribute::normal, 3, verticesByteCount, 0},
-        {applesauce::VertexAttribute::texcoord, 2, verticesByteCount + normalsByteCount, 0},
-    };
-
-    vertexArray->addVertexBuffer(*vertexBuffer, desc);
-
-    return {vertexArray, indexBuffer, static_cast<int>(indices.size())};
+    return meshFromComponents(vertices, normals, texcoords, indices);
 }
 
 static constexpr unsigned int SHADOW_WIDTH = 1024,
