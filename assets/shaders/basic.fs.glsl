@@ -8,8 +8,8 @@ uniform vec3 LightDirection;
 uniform float SpecularPower;
 uniform float SpecularStrength;
 
-uniform sampler2DShadow shadowMap;
 uniform sampler2D albedo;
+uniform sampler2DShadow shadowMap;
 
 in vec3 normal;
 in vec3 position;

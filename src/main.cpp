@@ -30,6 +30,50 @@
 #include <sstream>
 #include <vector>
 
+static unsigned int quadVAO;
+static unsigned int quadVBO;
+void renderQuad()
+{
+    if (quadVAO == 0)
+    {
+        float quadVertices[] = {
+            -0.5f,
+            0.5f,
+            0.0f,
+            0.0f,
+            1.0f,
+            -0.5f,
+            -0.5f,
+            0.0f,
+            0.0f,
+            0.0f,
+            0.5f,
+            0.5f,
+            0.0f,
+            1.0f,
+            1.0f,
+            0.5f,
+            -0.5f,
+            0.0f,
+            1.0f,
+            0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+}
+
 static constexpr unsigned int SHADOW_WIDTH = 1024,
                               SHADOW_HEIGHT = 1024;
 
@@ -137,6 +181,7 @@ public:
         // Loads from assets/shaders/basic.fs.glsl and assets/shaders/basic.vs.glsl
         shader = loadShader("basic");
         shadow = loadShader("shadow");
+        quad = loadShader("quad");
 
         checkerTexture = try_png("assets/textures/Checker.png");
         whiteSquareTexture = try_png("assets/textures/White Square.png");
@@ -203,7 +248,7 @@ public:
         glPolygonOffset(2.0f, 4.0f);
 
         static float lightDist = 11.2;
-        static float lightSize = 15.0f;
+        static float lightSize = 12.0f;
         shadow->use();
         glm::mat4 lightSpaceMatrix;
         { // Shadow map part
@@ -235,7 +280,7 @@ public:
 
         shader->use();
 
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0 + 1);
         glBindTexture(GL_TEXTURE_2D, depthMap);
 
         const auto [width, height] = window.framebufferSize();
@@ -279,10 +324,10 @@ public:
             shader->set("SpecularPower", specularPower);
             shader->set("SpecularStrength", specularStrength);
 
-            shader->set("shadowMap", 0);
-            shader->set("albedo", 1);
+            shader->set("albedo", 0);
+            shader->set("shadowMap", 1);
 
-            glActiveTexture(GL_TEXTURE0 + 1);
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, entity.textureId);
 
             auto &mesh = entity.mesh;
@@ -290,6 +335,16 @@ public:
             mesh->indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
             glDrawElements(GL_TRIANGLES, mesh->elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
         }
+
+        /*
+                glDisable(GL_DEPTH_TEST);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, depthMap);
+
+                quad->use();
+
+                renderQuad();
+                */
     }
 
     void cleanUp() override
@@ -303,6 +358,7 @@ public:
 private:
     std::shared_ptr<Shader> shader;
     std::shared_ptr<Shader> shadow;
+    std::shared_ptr<Shader> quad;
 
     std::vector<Entity> entities;
 
