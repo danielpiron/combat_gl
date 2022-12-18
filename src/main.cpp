@@ -137,17 +137,33 @@ struct Entity
     virtual void init(ResourceManager &) {}
     virtual void update() {}
     virtual ~Entity() {}
+    void destroy()
+    {
+        isPendingDestruction = true;
+    }
+
+    bool isPendingDestruction = false;
 };
 
 class Block : public Entity
 {
+    float spinSpeed = 0.1f;
+    int timer;
     void init(ResourceManager &rm)
     {
         mesh = rm.getMesh("Box");
         textureId = rm.getTexture("White Square");
+        timer = rand() % 2000;
     }
     void update()
     {
+        if (timer == 0)
+        {
+            spinSpeed = 0;
+            destroy();
+        }
+        orientation = glm::rotate(orientation, spinSpeed, glm::vec3{0, 1.0f, 0});
+        timer--;
     }
 };
 
@@ -278,8 +294,12 @@ public:
 
     void update() override
     {
+        entities.erase(std::remove_if(entities.begin(), entities.end(), [](const auto &e)
+                                      { return e->isPendingDestruction; }),
+                       entities.end());
         for (auto &entity : entities)
         {
+            entity->update();
             // Update modelMatrix of all entities in preparation for render
             entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
         }
@@ -412,7 +432,7 @@ private:
     std::shared_ptr<Shader> shadow;
     std::shared_ptr<Shader> quad;
 
-    std::vector<std::shared_ptr<Entity>> entities;
+    std::list<std::shared_ptr<Entity>> entities;
 
     std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes;
     std::unordered_map<std::string, GLuint> textures;
