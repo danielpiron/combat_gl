@@ -1,7 +1,6 @@
 #version 330 core
 
 uniform vec3 Color;
-uniform vec3 Ambient;
 uniform vec3 LightColor;
 uniform vec3 LightDirection;
 
@@ -16,6 +15,7 @@ in vec3 position;
 in vec2 texcoords;
 in vec3 fragPos;
 in vec4 lightSpacePosition;
+in vec3 ambient;
 out vec4 fColor;
 
 /*
@@ -48,7 +48,7 @@ void main() {
     float shadow = textureProj(shadowMap, lightSpacePosition);
     // float shadow = ShadowCalculation(lightSpacePosition);
     float diffuse = max(0.0, dot(normal, LightDirection));
-    vec3 scatteredLight = Ambient + LightColor * diffuse * shadow;
+    vec3 scatteredLight = ambient + LightColor * diffuse * shadow;
 
     vec3 viewDir = normalize(-position);
     vec3 reflectDir = reflect(-LightDirection, normal);

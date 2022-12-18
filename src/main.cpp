@@ -184,10 +184,12 @@ class TinyBlock : public Entity
         position += velocity;
 
         // bounce
-        if (position.y < 0.05)
+        if (position.y < 0.125)
         {
-            position.y = 0.05;
+            position.y = 0.126;
             velocity.y *= -0.5f;
+            velocity.x += velocity.x * -0.1f;
+            velocity.z += velocity.z * -0.1f;
         }
 
         timer--;
@@ -304,7 +306,7 @@ public:
         textures.emplace("Checker", try_png("assets/textures/Checker.png"));
         textures.emplace("White Square", try_png("assets/textures/White Square.png"));
 
-        meshes.emplace("TinyBox", std::make_shared<Mesh>(makeBoxMesh(0.1f)));
+        meshes.emplace("TinyBox", std::make_shared<Mesh>(makeBoxMesh(0.25f)));
         meshes.emplace("Box", std::make_shared<Mesh>(makeBoxMesh(1.0f)));
         meshes.emplace("Plane", std::make_shared<Mesh>(makePlaneMesh(20)));
 
@@ -436,7 +438,10 @@ public:
             shader->set("LightViewMatrix", LightViewMatrix);
             shader->set("NormalMatrix", normalMatrix);
             shader->set("Color", glm::vec3(0.5, 0.5, 0.5));
-            shader->set("Ambient", ambient);
+            // shader->set("Ambient", ambient);
+            shader->set("AmbientSky", triAmbient.sky);
+            shader->set("AmbientEquator", triAmbient.equator);
+            shader->set("AmbientGround", triAmbient.ground);
             shader->set("LightColor", glm::vec3{1.0, 1.0, 1.0});
             shader->set("LightDirection", LightDirection);
             shader->set("SpecularPower", specularPower);
@@ -506,6 +511,18 @@ private:
 
     float specularPower = 32.0f;
     float specularStrength = 1.0f;
+
+    struct Ambient
+    {
+        glm::vec3 sky;
+        glm::vec3 equator;
+        glm::vec3 ground;
+    };
+    Ambient triAmbient{
+        {0.212, 0.227, 0.259},
+        {0.114, 0.125, 0.133},
+        {0.047, 0.043, 0.035},
+    };
 
     // Shadow map bits
     GLuint depthMapFBO;

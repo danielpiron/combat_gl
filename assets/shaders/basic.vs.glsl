@@ -9,6 +9,11 @@ uniform mat4 ModelViewMatrix;
 uniform mat4 LightViewMatrix;
 uniform mat3 NormalMatrix;
 
+uniform vec3 AmbientSky;
+uniform vec3 AmbientEquator;
+uniform vec3 AmbientGround;
+
+out vec3 ambient;
 out vec3 position;
 out vec4 lightSpacePosition;
 out vec3 normal;
@@ -20,4 +25,5 @@ void main() {
     lightSpacePosition = LightViewMatrix * vec4(vPosition, 1);
     texcoords = vTexCoords;
     gl_Position = MVPMatrix * vec4(vPosition, 1);
+    ambient = normal.y > 0 ? mix(AmbientEquator, AmbientSky, normal.y) : mix(AmbientEquator, AmbientGround, -normal.y);
 }
