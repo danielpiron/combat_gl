@@ -198,17 +198,19 @@ class TinyBlock : public Entity
 
 class Block : public Entity
 {
-    float spinSpeed = 0.1f;
-    int timer;
+    static constexpr float topSpinSpeed = 0.3f;
+
+    int endTime;
+    int timer = 0;
     void init(ResourceManager &rm)
     {
         mesh = rm.getMesh("Box");
         textureId = rm.getTexture("White Square");
-        timer = rand() % 500;
+        endTime = rand() % 2000;
     }
     void update()
     {
-        if (timer == 0)
+        if (timer >= endTime)
         {
             size_t spawnCount = static_cast<size_t>(rand() % 10) + 10;
             for (size_t i = 0; i <= spawnCount; ++i)
@@ -217,8 +219,9 @@ class Block : public Entity
             }
             destroy();
         }
+        const float spinSpeed = (static_cast<float>(timer) / static_cast<float>(endTime)) * topSpinSpeed;
         orientation = glm::rotate(orientation, spinSpeed, glm::vec3{0, 1.0f, 0});
-        timer--;
+        timer++;
     }
 };
 
@@ -499,8 +502,8 @@ private:
     std::unordered_map<std::string, GLuint> textures;
 
     Camera camera;
-    float pitch = 0.425833;
-    float theta = 2.95142;
+    float pitch = 0.363528;
+    float theta = 3.3335;
     float dist = 10.1983;
 
     double last_xpos = 0;
