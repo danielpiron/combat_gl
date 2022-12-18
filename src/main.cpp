@@ -125,6 +125,7 @@ public:
     virtual GLuint getTexture(const std::string &) = 0;
 };
 
+struct IWorld;
 struct Entity
 {
     glm::vec3 position = glm::vec3{0};
@@ -133,6 +134,8 @@ struct Entity
     GLuint textureId = 0;
 
     glm::mat4 modelMatrix = glm::mat4{1.0f};
+
+    IWorld *world = nullptr;
 
     virtual void init(ResourceManager &) {}
     virtual void update() {}
@@ -145,6 +148,52 @@ struct Entity
     bool isPendingDestruction = false;
 };
 
+struct IWorld
+{
+    virtual void spawn(Entity *, const glm::vec3 &position = glm::vec3{0}, const glm::quat &orientation = glm::quat{}) = 0;
+};
+
+float fRand(float max)
+{
+    return max * static_cast<float>(rand() % 10000) / 10000.0f;
+}
+
+class TinyBlock : public Entity
+{
+    glm::vec3 velocity;
+    float timer;
+
+    void init(ResourceManager &rm)
+    {
+        mesh = rm.getMesh("TinyBox");
+        textureId = rm.getTexture("White Square");
+        timer = rand() % 400;
+
+        float speed = fRand(0.2) + 0.01;
+        glm::vec3 vel{0, 1.0f, 0};
+        vel = glm::mat3(glm::yawPitchRoll(fRand(1.0f) - 0.5f, 0.0f, fRand(1.0f) - 0.5f)) * vel;
+        velocity = vel * speed;
+    }
+    void update()
+    {
+        if (timer == 0)
+        {
+            destroy();
+        }
+        velocity += glm::vec3(0, -0.001f, 0);
+        position += velocity;
+
+        // bounce
+        if (position.y < 0.05)
+        {
+            position.y = 0.05;
+            velocity.y *= -0.5f;
+        }
+
+        timer--;
+    }
+};
+
 class Block : public Entity
 {
     float spinSpeed = 0.1f;
@@ -153,13 +202,17 @@ class Block : public Entity
     {
         mesh = rm.getMesh("Box");
         textureId = rm.getTexture("White Square");
-        timer = rand() % 2000;
+        timer = rand() % 500;
     }
     void update()
     {
         if (timer == 0)
         {
-            spinSpeed = 0;
+            size_t spawnCount = static_cast<size_t>(rand() % 10) + 10;
+            for (size_t i = 0; i <= spawnCount; ++i)
+            {
+                world->spawn(new TinyBlock, position, glm::quat{});
+            }
             destroy();
         }
         orientation = glm::rotate(orientation, spinSpeed, glm::vec3{0, 1.0f, 0});
@@ -180,6 +233,7 @@ class Floor : public Entity
 };
 
 class Triangles : public App,
+                  public IWorld,
                   public ResourceManager,
                   public Window::ScrollHandler,
                   public Window::MouseHandler,
@@ -250,6 +304,7 @@ public:
         textures.emplace("Checker", try_png("assets/textures/Checker.png"));
         textures.emplace("White Square", try_png("assets/textures/White Square.png"));
 
+        meshes.emplace("TinyBox", std::make_shared<Mesh>(makeBoxMesh(0.1f)));
         meshes.emplace("Box", std::make_shared<Mesh>(makeBoxMesh(1.0f)));
         meshes.emplace("Plane", std::make_shared<Mesh>(makePlaneMesh(20)));
 
@@ -418,12 +473,13 @@ public:
         std::cout << "\tDist: " << dist << std::endl;
     }
 
-    void spawn(Entity *entity, const glm::vec3 &position = glm::vec3{0}, const glm::quat &orientation = glm::quat{})
+    void spawn(Entity *entity, const glm::vec3 &position = glm::vec3{0}, const glm::quat &orientation = glm::quat{}) override
     {
         auto e = std::shared_ptr<Entity>(entity);
         e->init(*this);
         e->position = position;
         e->orientation = orientation;
+        e->world = this;
         entities.emplace_back(e);
     }
 
@@ -438,8 +494,8 @@ private:
     std::unordered_map<std::string, GLuint> textures;
 
     Camera camera;
-    float pitch = 0.955591;
-    float theta = 2.90973;
+    float pitch = 0.425833;
+    float theta = 2.95142;
     float dist = 10.1983;
 
     double last_xpos = 0;
