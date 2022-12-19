@@ -18,6 +18,10 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #include <png.h>
 
 #include <algorithm>
@@ -297,6 +301,19 @@ public:
 
     void init() override
     {
+
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO &io = ImGui::GetIO();
+        (void)io;
+
+        ImGui::StyleColorsDark();
+
+        const char *glsl_version = "#version 150";
+
+        ImGui_ImplGlfw_InitForOpenGL(window.glfwWindow(), true);
+        ImGui_ImplOpenGL3_Init(glsl_version);
+
         window.setScrollHandler(this);
         window.setMouseHandler(this);
         window.setKeyHandler(this);
@@ -461,6 +478,21 @@ public:
             mesh->indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
             glDrawElements(GL_TRIANGLES, mesh->elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
         }
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("Adjustment");
+
+        ImGui::ColorEdit3("sky", &triAmbient.sky[0]);
+        ImGui::ColorEdit3("equator", &triAmbient.equator[0]);
+        ImGui::ColorEdit3("ground", &triAmbient.ground[0]);
+
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         /*
                 glDisable(GL_DEPTH_TEST);
