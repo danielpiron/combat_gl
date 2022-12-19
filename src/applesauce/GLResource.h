@@ -2,12 +2,34 @@
 
 #include <glad/glad.h>
 
-class GLResource
+namespace applesauce
 {
-public:
-    explicit GLResource(const GLuint resourceId) : id(resourceId) {}
-    GLuint glId() const { return id; }
+    class GLResource
+    {
+    public:
+        GLResource() : id(0) {}
+        GLResource(const GLuint resourceId) : id(resourceId) {}
 
-protected:
-    GLuint id;
-};
+        GLResource(const GLResource &) = delete;
+        GLResource(GLResource &&other) : GLResource(other.id)
+        {
+            other.id = 0;
+        }
+        GLResource &operator=(const GLResource &) = delete;
+        GLResource &operator=(GLResource &&other)
+        {
+            id = other.id;
+            other.id = 0;
+            return *this;
+        }
+
+    protected:
+        GLuint glId() const
+        {
+            return id;
+        }
+
+    private:
+        GLuint id;
+    };
+}
