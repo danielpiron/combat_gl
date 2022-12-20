@@ -114,6 +114,16 @@ namespace applesauce
             glDeleteTextures(1, &id);
         }
 
+        void bind() const
+        {
+            glBindTexture(target, glId());
+        }
+
+        void unbind() const
+        {
+            glBindTexture(target, 0);
+        }
+
         void setImage(int width, int height, Format, void *data) const
         {
             bind();
@@ -155,17 +165,17 @@ namespace applesauce
             unbind();
         }
 
-        void bind() const
+        void generateMipmaps()
         {
-            glBindTexture(target, glId());
-        }
-
-        void unbind() const
-        {
-            glBindTexture(target, 0);
+            bind();
+            glGenerateMipmap(target);
+            unbind();
         }
 
     private:
         Format internalFormat;
     };
+
+    using Texture = Texture2D;
+
 }

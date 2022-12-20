@@ -5,6 +5,7 @@
 #include "applesauce/VertexBuffer.h"
 #include "applesauce/VertexArray.h"
 #include "applesauce/Shader.h"
+#include "applesauce/Texture.h"
 #include "applesauce/Camera.h"
 // #include "applesauce/Mesh.h"
 
@@ -83,10 +84,9 @@ void renderQuad()
 static constexpr unsigned int SHADOW_WIDTH = 1024,
                               SHADOW_HEIGHT = 1024;
 
-GLuint try_png(const char *filename)
+std::shared_ptr<applesauce::Texture> try_png(const char *filename)
 {
     png_image image;
-
     /* Only the image structure version number needs to be set. */
     std::memset(&image, 0, sizeof image);
     image.version = PNG_IMAGE_VERSION;
@@ -99,34 +99,25 @@ GLuint try_png(const char *filename)
         if (png_image_finish_read(&image, NULL /*background*/, buffer, 0 /*row_stride*/,
                                   NULL /*colormap for PNG_FORMAT_FLAG_COLORMAP */))
         {
-            GLuint texture = 0;
-            glGenTextures(1, &texture);
-            glBindTexture(GL_TEXTURE_2D, texture);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-            std::cout << "Texture Dimensions: " << image.width << "x" << image.height << std::endl;
+            auto tex = std::make_shared<applesauce::Texture>();
+            tex->setMinFilter(applesauce::Texture::Filter::linearMipMapLinear);
+            tex->setMagFilter(applesauce::Texture::Filter::linear);
 
             auto ptr = reinterpret_cast<GLubyte *>(buffer);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(image.width),
-                         static_cast<GLsizei>(image.height), 0, GL_RGBA, GL_UNSIGNED_BYTE, ptr);
+            tex->setImage(image.width, image.height, applesauce::Texture::Format::rgba, ptr);
+            tex->generateMipmaps();
 
-            std::cout << "Texture loaded" << std::endl;
-
-            glGenerateMipmap(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, 0);
-            return texture;
+            return tex;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 class ResourceManager
 {
 public:
     virtual std::shared_ptr<Mesh> getMesh(const std::string &) = 0;
-    virtual GLuint getTexture(const std::string &) = 0;
+    virtual std::shared_ptr<applesauce::Texture2D> getTexture(const std::string &) = 0;
 };
 
 struct IWorld;
@@ -135,7 +126,7 @@ struct Entity
     glm::vec3 position = glm::vec3{0};
     glm::quat orientation = glm::quat{};
     std::shared_ptr<Mesh> mesh = nullptr;
-    GLuint textureId = 0;
+    std::shared_ptr<applesauce::Texture> texture = nullptr;
 
     glm::mat4 modelMatrix = glm::mat4{1.0f};
 
@@ -170,7 +161,7 @@ class TinyBlock : public Entity
     void init(ResourceManager &rm)
     {
         mesh = rm.getMesh("TinyBox");
-        textureId = rm.getTexture("White Square");
+        texture = rm.getTexture("White Square");
         timer = rand() % 400;
 
         float speed = fRand(0.2) + 0.01;
@@ -209,7 +200,7 @@ class Block : public Entity
     void init(ResourceManager &rm)
     {
         mesh = rm.getMesh("Box");
-        textureId = rm.getTexture("White Square");
+        texture = rm.getTexture("White Square");
         endTime = rand() % 2000;
     }
     void update()
@@ -234,7 +225,7 @@ class Floor : public Entity
     void init(ResourceManager &rm)
     {
         mesh = rm.getMesh("Plane");
-        textureId = rm.getTexture("Checker");
+        texture = rm.getTexture("Checker");
     }
     void update()
     {
@@ -294,7 +285,7 @@ public:
     {
         return meshes[key];
     }
-    GLuint getTexture(const std::string &key) override
+    std::shared_ptr<applesauce::Texture2D> getTexture(const std::string &key) override
     {
         return textures[key];
     }
@@ -471,7 +462,7 @@ public:
             shader->set("shadowMap", 1);
 
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, entity->textureId);
+            entity->texture->bind();
 
             auto &mesh = entity->mesh;
             mesh->vertexArray->bind();
@@ -531,7 +522,7 @@ private:
     std::list<std::shared_ptr<Entity>> entities;
 
     std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes;
-    std::unordered_map<std::string, GLuint> textures;
+    std::unordered_map<std::string, std::shared_ptr<applesauce::Texture>> textures;
 
     Camera camera;
     float pitch = 0.363528;
