@@ -85,6 +85,37 @@ TEST_F(AppleSauceTexture, CanSetFilters)
     EXPECT_EQ(GL_LINEAR, magFilter);
 }
 
+TEST_F(AppleSauceTexture, CanSetWrappingBehavior)
+{
+    Texture2D tex;
+    tex.setWrapping(Texture2D::Wrap::repeat, Texture2D::Wrap::repeat);
+
+    tex.bind();
+    GLint s_wrap, t_wrap;
+
+    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, &s_wrap);
+    EXPECT_EQ(GL_REPEAT, s_wrap);
+
+    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, &t_wrap);
+    EXPECT_EQ(GL_REPEAT, t_wrap);
+
+    tex.setWrapping(Texture2D::Wrap::clampToEdge, Texture2D::Wrap::clampToBorder);
+    tex.bind();
+    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, &s_wrap);
+    EXPECT_EQ(GL_CLAMP_TO_EDGE, s_wrap);
+
+    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, &t_wrap);
+    EXPECT_EQ(GL_CLAMP_TO_BORDER, t_wrap);
+
+    tex.setWrapping(Texture2D::Wrap::mirroredRepeat, Texture2D::Wrap::mirrorClampToEdge);
+    tex.bind();
+    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, &s_wrap);
+    EXPECT_EQ(GL_MIRRORED_REPEAT, s_wrap);
+
+    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, &t_wrap);
+    EXPECT_EQ(GL_MIRROR_CLAMP_TO_EDGE, t_wrap);
+}
+
 TEST_F(AppleSauceTexture, CanCreateNewRGBTexture)
 {
     std::vector<uint8_t> textureData{

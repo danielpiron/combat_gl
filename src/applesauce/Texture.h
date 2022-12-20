@@ -22,6 +22,15 @@ namespace applesauce
             linearMipMapLinear,
         };
 
+        enum class Wrap
+        {
+            clampToEdge,
+            clampToBorder,
+            mirroredRepeat,
+            repeat,
+            mirrorClampToEdge
+        };
+
     private:
         static bool minFilterOnly(const Filter filter)
         {
@@ -34,6 +43,25 @@ namespace applesauce
                 return true;
             default:
                 return false;
+            }
+        }
+
+        static GLenum glWrap(const Wrap wrap)
+        {
+            switch (wrap)
+            {
+            case Wrap::clampToBorder:
+                return GL_CLAMP_TO_BORDER;
+            case Wrap::clampToEdge:
+                return GL_CLAMP_TO_EDGE;
+            case Wrap::mirrorClampToEdge:
+                return GL_MIRROR_CLAMP_TO_EDGE;
+            case Wrap::mirroredRepeat:
+                return GL_MIRRORED_REPEAT;
+            case Wrap::repeat:
+                return GL_REPEAT;
+            default:
+                return 0;
             }
         }
 
@@ -104,7 +132,7 @@ namespace applesauce
         void setMinFilter(const Filter filter)
         {
             bind();
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter(filter));
+            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, glFilter(filter));
             unbind();
         }
 
@@ -115,7 +143,15 @@ namespace applesauce
                 return;
             }
             bind();
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter(filter));
+            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, glFilter(filter));
+            unbind();
+        }
+
+        void setWrapping(const Wrap wrapS, const Wrap wrapT)
+        {
+            bind();
+            glTexParameteri(target, GL_TEXTURE_WRAP_S, glWrap(wrapS));
+            glTexParameteri(target, GL_TEXTURE_WRAP_T, glWrap(wrapT));
             unbind();
         }
 
