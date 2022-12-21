@@ -140,3 +140,30 @@ TEST_F(AppleSauceTexture, CanCreateNewRGBTexture)
 
     EXPECT_EQ(textureData, buffer);
 }
+
+TEST_F(AppleSauceTexture, CanCreateDepthTexture)
+{
+    DepthTexture2D tex(24, 16);
+
+    tex.bind();
+    GLint width;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+
+    GLint height;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+
+    GLint internalFormat;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat);
+
+    GLint compareFunc;
+    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, &compareFunc);
+
+    GLint compareMode;
+    glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, &compareMode);
+
+    EXPECT_EQ(24, width);
+    EXPECT_EQ(16, height);
+    EXPECT_EQ(GL_DEPTH_COMPONENT24, internalFormat);
+    EXPECT_EQ(GL_COMPARE_REF_TO_TEXTURE, compareMode);
+    EXPECT_EQ(GL_LEQUAL, compareFunc);
+}

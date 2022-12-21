@@ -7,8 +7,27 @@ namespace applesauce
     class Texture2D : public GLResource
     {
     public:
+        enum class CompareMode
+        {
+            none,
+            compareRefToTexture
+        };
+
+        enum class CompareFunc
+        {
+            lessThanOrEqual,
+            greaterThanOrEqual,
+            less,
+            greater,
+            equal,
+            notEqual,
+            always,
+            never
+        };
+
         enum class Format
         {
+            depthComponent,
             rgba
         };
 
@@ -92,6 +111,8 @@ namespace applesauce
             {
             case Format::rgba:
                 return GL_RGBA;
+            case Format::depthComponent:
+                return GL_DEPTH_COMPONENT;
             default:
                 return 0;
             }
@@ -124,7 +145,54 @@ namespace applesauce
             glBindTexture(target, 0);
         }
 
-        void setImage(int width, int height, Format, void *data) const
+        void setCompareFunc(const CompareFunc func)
+        {
+            GLenum glFunc = 0;
+            switch (func)
+            {
+            case CompareFunc::lessThanOrEqual:
+                glFunc = GL_LEQUAL;
+                break;
+            case CompareFunc::greaterThanOrEqual:
+                glFunc = GL_GEQUAL;
+                break;
+            case CompareFunc::less:
+                glFunc = GL_LESS;
+                break;
+            case CompareFunc::greater:
+                glFunc = GL_GREATER;
+                break;
+            case CompareFunc::equal:
+                glFunc = GL_EQUAL;
+                break;
+            case CompareFunc::notEqual:
+                glFunc = GL_NOTEQUAL;
+                break;
+            case CompareFunc::always:
+                glFunc = GL_ALWAYS;
+                break;
+            case CompareFunc::never:
+                glFunc = GL_NEVER;
+                break;
+            }
+            bind();
+            glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, glFunc);
+            unbind();
+        }
+
+        void setCompareMode(const CompareMode mode)
+        {
+            GLenum glMode = GL_NONE;
+            if (mode == CompareMode::compareRefToTexture)
+            {
+                glMode = GL_COMPARE_REF_TO_TEXTURE;
+            }
+            bind();
+            glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, glMode);
+            unbind();
+        }
+
+        void setImage(int width, int height, Format format, void *data) const
         {
             bind();
             glTexImage2D(target,
@@ -133,7 +201,7 @@ namespace applesauce
                          static_cast<GLsizei>(width),
                          static_cast<GLsizei>(height),
                          0, // border always 0
-                         GL_RGBA,
+                         glInternalFormat(format),
                          GL_UNSIGNED_BYTE,
                          data);
             unbind();
@@ -174,6 +242,17 @@ namespace applesauce
 
     private:
         Format internalFormat;
+    };
+
+    class DepthTexture2D : public Texture2D
+    {
+    public:
+        DepthTexture2D(int width, int height) : Texture2D(Texture2D::Format::depthComponent)
+        {
+            setImage(width, height, Texture2D::Format::depthComponent, nullptr);
+            setCompareMode(Texture2D::CompareMode::compareRefToTexture);
+            setCompareFunc(Texture2D::CompareFunc::lessThanOrEqual);
+        }
     };
 
     using Texture = Texture2D;
