@@ -244,17 +244,20 @@ namespace applesauce
         Format internalFormat;
     };
 
+    using Texture = Texture2D;
+
     class DepthTexture2D : public Texture2D
     {
     public:
         DepthTexture2D(int width, int height) : Texture2D(Texture2D::Format::depthComponent)
         {
-            setImage(width, height, Texture2D::Format::depthComponent, nullptr);
-            setCompareMode(Texture2D::CompareMode::compareRefToTexture);
-            setCompareFunc(Texture2D::CompareFunc::lessThanOrEqual);
+            setImage(width, height, Texture::Format::depthComponent, nullptr);
+            setWrapping(Texture::Wrap::clampToEdge, Texture::Wrap::clampToEdge);
+            setMinFilter(Texture::Filter::linear);
+            setMagFilter(Texture::Filter::linear);
+            setCompareMode(Texture::CompareMode::compareRefToTexture);
+            setCompareFunc(Texture::CompareFunc::lessThanOrEqual);
         }
     };
-
-    using Texture = Texture2D;
 
 }

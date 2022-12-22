@@ -23,7 +23,8 @@ namespace applesauce
             return *this;
         }
 
-    protected:
+        // protected:
+    public:
         GLuint glId() const
         {
             return id;
