@@ -18,7 +18,7 @@ public:
     {
     }
     virtual void init() = 0;
-    virtual void update(){};
+    virtual void update(float){};
     virtual void display() = 0;
     virtual void cleanUp() {}
 
@@ -49,11 +49,13 @@ private:
 
         glfwSwapInterval(1);
 
+        float step = 1.0f / 60.0f;
+
         while (!window.shouldClose())
         {
             window.pollEvents();
 
-            update();
+            update(step);
             display();
 
             window.swapBuffers();

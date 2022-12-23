@@ -133,7 +133,7 @@ struct Entity
     IWorld *world = nullptr;
 
     virtual void init(ResourceManager &) {}
-    virtual void update() {}
+    virtual void update(float) {}
     virtual ~Entity() {}
     void destroy()
     {
@@ -164,19 +164,19 @@ class TinyBlock : public Entity
         texture = rm.getTexture("White Square");
         timer = rand() % 400;
 
-        float speed = fRand(0.2) + 0.01;
+        float speed = fRand(12.0f) + 0.6f;
         glm::vec3 vel{0, 1.0f, 0};
         vel = glm::mat3(glm::yawPitchRoll(fRand(1.0f) - 0.5f, 0.0f, fRand(1.0f) - 0.5f)) * vel;
         velocity = vel * speed;
     }
-    void update()
+    void update(float dt)
     {
         if (timer == 0)
         {
             destroy();
         }
-        velocity += glm::vec3(0, -0.001f, 0);
-        position += velocity;
+        velocity += glm::vec3(0, -9.8f, 0) * dt;
+        position += velocity * dt;
 
         // bounce
         if (position.y < 0.125)
@@ -193,19 +193,19 @@ class TinyBlock : public Entity
 
 class Block : public Entity
 {
-    static constexpr float topSpinSpeed = 0.3f;
+    static constexpr float topSpinSpeed = M_PI * 4;
 
-    int endTime;
-    int timer = 0;
+    float timeLimit;
+    float timer = 0;
     void init(ResourceManager &rm)
     {
         mesh = rm.getMesh("Box");
         texture = rm.getTexture("White Square");
-        endTime = rand() % 2000;
+        timeLimit = fRand(10.0f) + 2.0f;
     }
-    void update()
+    void update(float dt)
     {
-        if (timer >= endTime)
+        if (timer >= timeLimit)
         {
             size_t spawnCount = static_cast<size_t>(rand() % 10) + 10;
             for (size_t i = 0; i <= spawnCount; ++i)
@@ -214,9 +214,9 @@ class Block : public Entity
             }
             destroy();
         }
-        const float spinSpeed = (static_cast<float>(timer) / static_cast<float>(endTime)) * topSpinSpeed;
+        const float spinSpeed = (timer / timeLimit) * topSpinSpeed * dt;
         orientation = glm::rotate(orientation, spinSpeed, glm::vec3{0, 1.0f, 0});
-        timer++;
+        timer += dt;
     }
 };
 
@@ -227,7 +227,7 @@ class Floor : public Entity
         mesh = rm.getMesh("Plane");
         texture = rm.getTexture("Checker");
     }
-    void update()
+    void update(float)
     {
     }
 };
@@ -349,14 +349,14 @@ public:
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    void update() override
+    void update(float dt) override
     {
         entities.erase(std::remove_if(entities.begin(), entities.end(), [](const auto &e)
                                       { return e->isPendingDestruction; }),
                        entities.end());
         for (auto &entity : entities)
         {
-            entity->update();
+            entity->update(dt);
             // Update modelMatrix of all entities in preparation for render
             entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
         }
