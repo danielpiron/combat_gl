@@ -8,12 +8,23 @@
         {
             "name" : "Scene",
             "nodes" : [
-                0
+                1
             ]
         }
     ],
     "nodes" : [
         {
+            "name" : "FireOrigin",
+            "translation" : [
+                0,
+                0.7637348771095276,
+                -0.9913181662559509
+            ]
+        },
+        {
+            "children" : [
+                0
+            ],
             "mesh" : 0,
             "name" : "Tenk"
         }
