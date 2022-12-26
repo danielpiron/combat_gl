@@ -84,6 +84,16 @@ void renderQuad()
 static constexpr unsigned int SHADOW_WIDTH = 1024,
                               SHADOW_HEIGHT = 1024;
 
+std::shared_ptr<applesauce::Texture> singleColorTexture(uint32_t color)
+{
+    auto tex = std::make_shared<applesauce::Texture>();
+    tex->setMinFilter(applesauce::Texture::Filter::nearest);
+    tex->setMagFilter(applesauce::Texture::Filter::nearest);
+
+    tex->setImage(1, 1, applesauce::Texture::Format::rgba, &color);
+    return tex;
+};
+
 std::shared_ptr<applesauce::Texture> try_png(const char *filename)
 {
     png_image image;
@@ -237,6 +247,7 @@ class Tenk : public Entity
     void init(ResourceManager &rm)
     {
         mesh = rm.getMesh("Tenk");
+        texture = rm.getTexture("White");
     }
     void update(float)
     {
@@ -325,6 +336,7 @@ public:
         shadow = loadShader("shadow");
         quad = loadShader("quad");
 
+        textures.emplace("White", singleColorTexture(0xFFFFFFFF));
         textures.emplace("Checker", try_png("assets/textures/Checker.png"));
         textures.emplace("White Square", try_png("assets/textures/White Square.png"));
 
