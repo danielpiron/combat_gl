@@ -116,7 +116,7 @@ std::shared_ptr<applesauce::Texture> try_png(const char *filename)
 class ResourceManager
 {
 public:
-    virtual std::shared_ptr<Mesh> getMesh(const std::string &) = 0;
+    virtual std::shared_ptr<applesauce::Mesh> getMesh(const std::string &) = 0;
     virtual std::shared_ptr<applesauce::Texture2D> getTexture(const std::string &) = 0;
 };
 
@@ -125,7 +125,7 @@ struct Entity
 {
     glm::vec3 position = glm::vec3{0};
     glm::quat orientation = glm::quat{};
-    std::shared_ptr<Mesh> mesh = nullptr;
+    std::shared_ptr<applesauce::Mesh> mesh = nullptr;
     std::shared_ptr<applesauce::Texture> texture = nullptr;
 
     glm::mat4 modelMatrix = glm::mat4{1.0f};
@@ -281,7 +281,7 @@ public:
         last_ypos = ypos;
     }
 
-    std::shared_ptr<Mesh> getMesh(const std::string &key) override
+    std::shared_ptr<applesauce::Mesh> getMesh(const std::string &key) override
     {
         return meshes[key];
     }
@@ -317,9 +317,9 @@ public:
         textures.emplace("Checker", try_png("assets/textures/Checker.png"));
         textures.emplace("White Square", try_png("assets/textures/White Square.png"));
 
-        meshes.emplace("TinyBox", std::make_shared<Mesh>(makeBoxMesh(0.25f)));
-        meshes.emplace("Box", std::make_shared<Mesh>(makeBoxMesh(1.0f)));
-        meshes.emplace("Plane", std::make_shared<Mesh>(makePlaneMesh(20)));
+        meshes.emplace("TinyBox", std::make_shared<applesauce::Mesh>(makeBoxMesh(0.25f)));
+        meshes.emplace("Box", std::make_shared<applesauce::Mesh>(makeBoxMesh(1.0f)));
+        meshes.emplace("Plane", std::make_shared<applesauce::Mesh>(makePlaneMesh(20)));
 
         spawn(new Floor());
 
@@ -392,10 +392,12 @@ public:
 
                 shadow->set("MVPMatrix", MVPMatrix);
 
-                auto &mesh = entity->mesh;
-                mesh->vertexArray->bind();
-                mesh->indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
-                glDrawElements(GL_TRIANGLES, mesh->elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
+                for (const auto &primitive : entity->mesh->primitives)
+                {
+                    primitive.vertexArray->bind();
+                    primitive.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
+                    glDrawElements(GL_TRIANGLES, primitive.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
+                }
             }
         }
 
@@ -453,10 +455,12 @@ public:
             glActiveTexture(GL_TEXTURE0);
             entity->texture->bind();
 
-            auto &mesh = entity->mesh;
-            mesh->vertexArray->bind();
-            mesh->indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
-            glDrawElements(GL_TRIANGLES, mesh->elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
+            for (const auto &primitive : entity->mesh->primitives)
+            {
+                primitive.vertexArray->bind();
+                primitive.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
+                glDrawElements(GL_TRIANGLES, primitive.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));
+            }
         }
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -510,7 +514,7 @@ private:
 
     std::list<std::shared_ptr<Entity>> entities;
 
-    std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes;
+    std::unordered_map<std::string, std::shared_ptr<applesauce::Mesh>> meshes;
     std::unordered_map<std::string, std::shared_ptr<applesauce::Texture>> textures;
 
     Camera camera;

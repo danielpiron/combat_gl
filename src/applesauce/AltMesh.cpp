@@ -9,10 +9,10 @@
 
 #include <vector>
 
-static Mesh meshFromComponents(const std::vector<glm::vec3> &vertices,
-                               const std::vector<glm::vec3> &normals,
-                               const std::vector<glm::vec2> &texcoords,
-                               const std::vector<uint16_t> &indices)
+static applesauce::Mesh::Primitive primitiveFromComponents(const std::vector<glm::vec3> &vertices,
+                                                           const std::vector<glm::vec3> &normals,
+                                                           const std::vector<glm::vec2> &texcoords,
+                                                           const std::vector<uint16_t> &indices)
 {
     const int verticesByteCount = sizeof(vertices[0]) * vertices.size();
     const int normalsByteCount = sizeof(normals[0]) * normals.size();
@@ -50,10 +50,10 @@ static Mesh meshFromComponents(const std::vector<glm::vec3> &vertices,
 
     vertexArray->addVertexBuffer(*vertexBuffer, desc);
 
-    return {vertexArray, indexBuffer, static_cast<int>(indices.size())};
+    return {nullptr, vertexArray, indexBuffer, static_cast<int>(indices.size())};
 }
 
-Mesh makePlaneMesh(float planeSize)
+applesauce::Mesh makePlaneMesh(float planeSize)
 {
     // Plane
     //
@@ -97,10 +97,11 @@ Mesh makePlaneMesh(float planeSize)
         0, 1, 2, // Triangle A
         1, 3, 2, // Triangle B
     };
-    return meshFromComponents(vertices, normals, texcoords, indices);
+
+    return {{primitiveFromComponents(vertices, normals, texcoords, indices)}};
 }
 
-Mesh makeBoxMesh(float boxSize)
+applesauce::Mesh makeBoxMesh(float boxSize)
 {
     //
     //
@@ -236,5 +237,5 @@ Mesh makeBoxMesh(float boxSize)
         23,
     };
 
-    return meshFromComponents(vertices, normals, texcoords, indices);
+    return {{primitiveFromComponents(vertices, normals, texcoords, indices)}};
 }
