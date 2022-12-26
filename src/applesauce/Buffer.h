@@ -47,8 +47,8 @@ namespace applesauce
             unbind();
         }
 
-        Buffer(const void *data, size_t size)
-            : GLResource(genGlBuffer()), _target(0), _size(size), _elementSize(1)
+        Buffer(const void *data, size_t size, Target target = Target::none)
+            : GLResource(genGlBuffer()), _target(getGlTarget(target)), _size(size), _elementSize(1)
         {
             glBindBuffer(GL_COPY_WRITE_BUFFER, glId());
             glBufferData(GL_COPY_WRITE_BUFFER, size, data, GL_STATIC_DRAW);

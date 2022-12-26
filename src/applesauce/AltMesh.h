@@ -4,6 +4,7 @@
 
 #include <list>
 #include <memory>
+#include <unordered_map>
 
 namespace applesauce
 {
@@ -26,6 +27,8 @@ namespace applesauce
         };
         std::list<Primitive> primitives;
     };
+
+    std::unordered_map<std::string, Mesh> loadMeshes(const char *);
 
 }
 

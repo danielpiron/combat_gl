@@ -232,6 +232,17 @@ class Floor : public Entity
     }
 };
 
+class Tenk : public Entity
+{
+    void init(ResourceManager &rm)
+    {
+        mesh = rm.getMesh("Tenk");
+    }
+    void update(float)
+    {
+    }
+};
+
 class Triangles : public App,
                   public IWorld,
                   public ResourceManager,
@@ -321,7 +332,15 @@ public:
         meshes.emplace("Box", std::make_shared<applesauce::Mesh>(makeBoxMesh(1.0f)));
         meshes.emplace("Plane", std::make_shared<applesauce::Mesh>(makePlaneMesh(20)));
 
+        for (const auto &[name, mesh] : applesauce::loadMeshes("assets/gltf/tenk7.gltf"))
+        {
+            meshes.emplace(name, std::make_shared<applesauce::Mesh>(mesh));
+        }
+
+        meshes.emplace("Plane", std::make_shared<applesauce::Mesh>(makePlaneMesh(20)));
+
         spawn(new Floor());
+        spawn(new Tenk());
 
         int numberOfObjects = 20;
         float radius = 5.0f;
@@ -453,7 +472,10 @@ public:
             shader->set("shadowMap", 1);
 
             glActiveTexture(GL_TEXTURE0);
-            entity->texture->bind();
+            if (entity->texture)
+                entity->texture->bind();
+            else
+                glBindTexture(GL_TEXTURE_2D, 0);
 
             for (const auto &primitive : entity->mesh->primitives)
             {
