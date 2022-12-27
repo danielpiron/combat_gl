@@ -8,7 +8,7 @@ uniform float SpecularPower;
 uniform float SpecularStrength;
 
 uniform sampler2D albedo;
-uniform sampler2DShadow shadowMap;
+uniform sampler2D shadowMap;
 
 in vec3 normal;
 in vec3 position;
@@ -44,8 +44,20 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 }  
 */
 
+vec2 poissonDisk[4] = vec2[](
+  vec2( -0.94201624, -0.39906216 ),
+  vec2( 0.94558609, -0.76890725 ),
+  vec2( -0.094184101, -0.92938870 ),
+  vec2( 0.34495938, 0.29387760 )
+);
+
 void main() {
-    float shadow = textureProj(shadowMap, lightSpacePosition);
+    float shadow = 1.0;
+    for (int i=0;i<4;i++){
+        if (texture(shadowMap, lightSpacePosition.xy + poissonDisk[i] / 700.0).r < lightSpacePosition.z) {
+            shadow -= 0.2;
+        }
+    }
     // float shadow = ShadowCalculation(lightSpacePosition);
     float diffuse = max(0.0, dot(normal, LightDirection));
     vec3 scatteredLight = ambient + LightColor * diffuse * shadow;
