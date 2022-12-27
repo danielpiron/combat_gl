@@ -56,7 +56,7 @@ void main() {
     float specular = pow(max(dot(viewDir, reflectDir), 0.0), SpecularPower);
     vec3 reflectedLight = SpecularStrength * specular * LightColor;
 
-    vec3 alColor = texture(albedo, texcoords).rgb;
+    vec3 alColor = texture(albedo, texcoords).rgb * Color;
     vec3 rgb = min(alColor * scatteredLight + reflectedLight * shadow, vec3(1.0));
 
     fColor = vec4(rgb, 1.0);

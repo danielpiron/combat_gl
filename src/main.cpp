@@ -470,7 +470,6 @@ public:
             shader->set("ModelViewMatrix", modelView);
             shader->set("LightViewMatrix", LightViewMatrix);
             shader->set("NormalMatrix", normalMatrix);
-            shader->set("Color", glm::vec3(0.5, 0.5, 0.5));
             // shader->set("Ambient", ambient);
             shader->set("AmbientSky", triAmbient.sky);
             shader->set("AmbientEquator", triAmbient.equator);
@@ -491,6 +490,14 @@ public:
 
             for (const auto &primitive : entity->mesh->primitives)
             {
+                if (primitive.material)
+                {
+                    shader->set("Color", primitive.material->baseColor);
+                }
+                else
+                {
+                    shader->set("Color", glm::vec3(1.0, 1.0, 1.0));
+                }
                 primitive.vertexArray->bind();
                 primitive.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
                 glDrawElements(GL_TRIANGLES, primitive.elementCount, GL_UNSIGNED_SHORT, reinterpret_cast<void *>(0));

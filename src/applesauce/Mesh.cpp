@@ -70,8 +70,12 @@ namespace applesauce
 
                 auto indexBuffer = std::make_shared<Buffer>(&gltf.buffers[indicesBufferView.buffer].getBytes()[indicesBufferView.byteOffset + indicesAccessor.byteOffset],
                                                             indicesAccessor.count * 2, Buffer::Target::element_array);
+
+                // Snag just the base color from the material
+                auto materialColor = gltf.materials[gltfMeshPrimitive.material].pbrMetallicRoughness.baseColorFactor;
+                glm::vec3 baseColor{materialColor[0], materialColor[1], materialColor[2]};
                 primitives.emplace_back(Mesh::Primitive{
-                    nullptr, // No material
+                    std::make_shared<Material>(Material{baseColor}),
                     vertexArray,
                     indexBuffer,
                     indicesAccessor.count,
