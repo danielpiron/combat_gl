@@ -402,8 +402,12 @@ public:
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
-        glEnable(GL_POLYGON_OFFSET_FILL);
-        glPolygonOffset(2.0f, 4.0f);
+        /*
+                glEnable(GL_POLYGON_OFFSET_FILL);
+                glPolygonOffset(2.0f, 4.0f);
+                */
+
+        glCullFace(GL_FRONT);
 
         static float lightDist = 11.2;
         static float lightSize = 12.0f;
@@ -433,6 +437,8 @@ public:
 
         glDisable(GL_POLYGON_OFFSET_FILL);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glCullFace(GL_BACK);
 
         shader->use();
 
