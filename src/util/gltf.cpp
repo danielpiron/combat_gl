@@ -99,6 +99,30 @@ void from_json(const nlohmann::json &j, glTF::BufferView &bv)
         bv.target = glTF::BufferView::decodeTarget(j.at("target").get<int>());
 }
 
+void from_json(const nlohmann::json &j, glTF::Material::PbrMetallicRoughness &pbr)
+{
+    if (j.count("baseColorFactor"))
+        j.at("baseColorFactor").get_to(pbr.baseColorFactor);
+    if (j.count("metallicFactor"))
+        j.at("metallicFactor").get_to(pbr.metallicFactor);
+    if (j.count("roughnessFactor"))
+        j.at("roughnessFactor").get_to(pbr.roughnessFactor);
+}
+
+void from_json(const nlohmann::json &j, glTF::Material &m)
+{
+    if (j.count("alphaMode"))
+        j.at("alphaMode").get_to(m.alphaMode);
+    if (j.count("doubleSided"))
+        j.at("doubleSided").get_to(m.doubleSided);
+    if (j.count("emissiveFactor"))
+        j.at("emissiveFactor").get_to(m.emissiveFactor);
+    if (j.count("name"))
+        j.at("name").get_to(m.name);
+    if (j.count("pbrMetallicRoughness"))
+        j.at("pbrMetallicRoughness").get_to(m.pbrMetallicRoughness);
+}
+
 void from_json(const nlohmann::json &j, glTF::Mesh::Primitive &mp)
 {
     j.at("attributes").get_to(mp.attributes);
@@ -133,6 +157,10 @@ void from_json(const nlohmann::json &j, glTF &gltf)
     if (j.count("buffers"))
     {
         j.at("buffers").get_to(gltf.buffers);
+    }
+    if (j.count("materials"))
+    {
+        j.at("materials").get_to(gltf.materials);
     }
     if (j.count("meshes"))
     {

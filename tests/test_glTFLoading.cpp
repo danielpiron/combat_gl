@@ -2,6 +2,32 @@
 
 #include <util/gltf.h>
 
+std::ostream &operator<<(std::ostream &os, const glTF::Material::PbrMetallicRoughness &pbr)
+{
+	os << "{ baseColorFactor: "
+	   << "[ " << pbr.baseColorFactor[0]
+	   << ", " << pbr.baseColorFactor[1]
+	   << ", " << pbr.baseColorFactor[2]
+	   << " ]"
+	   << ", metallicFactor: " << pbr.metallicFactor
+	   << ", roughnessFactor: " << pbr.roughnessFactor;
+	return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const glTF::Material &m)
+{
+	os << "{ alphaMode: " << m.alphaMode
+	   << ", doubleSided: " << m.doubleSided
+	   << ", emissiveFactor [ " << m.emissiveFactor[0]
+	   << ", " << m.emissiveFactor[1]
+	   << ", " << m.emissiveFactor[2]
+	   << " ]"
+	   << ", name: \"" << m.name << "\""
+	   << ", pbrMetallicRoughness: \"" << m.pbrMetallicRoughness << "\""
+	   << " }";
+	return os;
+}
+
 TEST(glTFLoader, CanParseAssetVersion)
 {
 	const char *asset_version_only = R"({ "asset": { "version": "2.0" } })";
@@ -185,4 +211,68 @@ TEST(glTFLoader, CanParseMeshes)
 	}};
 
 	EXPECT_EQ(expectedMeshes, gltf.meshes);
+}
+
+TEST(glTFLoader, CanParseMaterials)
+{
+	const char *materials = R"(
+{
+  "materials" : [
+    {
+		"pbrMetallicRoughness": {
+			"baseColorFactor": [ 1.000, 0.766, 0.336, 1.0 ],
+			"metallicFactor": 0.5,
+			"roughnessFactor": 0.1
+		}
+	},
+	{
+		"doubleSided" : true,
+		"name" : "Treads",
+		"pbrMetallicRoughness" : {
+			"baseColorFactor" : [
+				0.017387472093105316,
+				0.012161456979811192,
+				0.014963649213314056,
+				1
+			],
+			"metallicFactor" : 0,
+			"roughnessFactor" : 0.5
+		}
+	}
+
+  ],
+  "asset" : {
+    "version" : "2.0"
+  }
+}
+)";
+
+	std::vector<glTF::Material>
+		expectedMaterials{
+			{"OPAQUE",	// alphaMode
+			 false,		// doubleSided
+			 {0, 0, 0}, // emissiveFactor
+			 "",		// name
+			 {
+				 {1.000, 0.766, 0.336, 1.0}, // baseColorFactor
+				 0.5,						 // metallicFactor
+				 0.1,						 // roughnessFactor
+			 }},
+			{"OPAQUE",	// alphaMode
+			 true,		// doubleSided
+			 {0, 0, 0}, // emissiveFactor
+			 "Treads",	// name
+			 {
+				 {0.017387472093105316f,
+				  0.012161456979811192f,
+				  0.014963649213314056f,
+				  1.0f}, // baseColorFactor
+				 0,		 // metallicFactor
+				 0.5,	 // roughnessFactor
+			 }},
+
+		};
+
+	auto gltf = glTFFromString(materials);
+	EXPECT_EQ(expectedMaterials, gltf.materials);
 }

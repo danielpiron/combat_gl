@@ -166,6 +166,49 @@ public:
         }
     };
 
+    struct Material
+    {
+        struct PbrMetallicRoughness
+        {
+            float baseColorFactor[4] = {
+                1.0f,
+                1.0f,
+                1.0f,
+                1.0f,
+            };
+            float metallicFactor = 1.0f;
+            float roughnessFactor = 1.0f;
+
+            bool operator==(const PbrMetallicRoughness &rhs) const
+            {
+                constexpr float EPSILON = 0.00001f;
+                const auto d0 = std::fabs(baseColorFactor[0] - rhs.baseColorFactor[0]) < EPSILON;
+                const auto d1 = std::fabs(baseColorFactor[1] - rhs.baseColorFactor[1]) < EPSILON;
+                const auto d2 = std::fabs(baseColorFactor[2] - rhs.baseColorFactor[2]) < EPSILON;
+                const auto d3 = std::fabs(baseColorFactor[3] - rhs.baseColorFactor[3]) < EPSILON;
+                const auto dm = std::fabs(metallicFactor - rhs.metallicFactor) < EPSILON;
+                const auto dr = std::fabs(roughnessFactor - rhs.roughnessFactor) < EPSILON;
+
+                return d0 && d1 && d2 && d3 && dm && dr;
+            }
+        };
+        std::string alphaMode = "OPAQUE";
+        bool doubleSided = false;
+        float emissiveFactor[3] = {0, 0, 0};
+        std::string name = "";
+        PbrMetallicRoughness pbrMetallicRoughness;
+
+        bool operator==(const Material &rhs) const
+        {
+            constexpr float EPSILON = 0.00001f;
+            const auto d0 = std::fabs(emissiveFactor[0] - rhs.emissiveFactor[0]) < EPSILON;
+            const auto d1 = std::fabs(emissiveFactor[1] - rhs.emissiveFactor[1]) < EPSILON;
+            const auto d2 = std::fabs(emissiveFactor[2] - rhs.emissiveFactor[2]) < EPSILON;
+            return alphaMode == rhs.alphaMode && doubleSided == rhs.doubleSided &&
+                   name == rhs.name && pbrMetallicRoughness == rhs.pbrMetallicRoughness && d0 && d1 && d2;
+        }
+    };
+
     struct Mesh
     {
         struct Primitive
@@ -205,12 +248,14 @@ public:
     };
 
 public:
+    using Materials = std::vector<Material>;
     using Meshes = std::vector<Mesh>;
 
     Asset asset;
     std::vector<Accessor> accessors;
     std::vector<BufferView> bufferViews;
     std::vector<Buffer> buffers;
+    Materials materials;
     Meshes meshes;
 };
 
