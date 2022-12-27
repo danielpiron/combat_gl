@@ -1,27 +1,42 @@
-/*
 #pragma once
 
-#include "VertexArray.h"
+#include <glm/vec3.hpp>
 
 #include <list>
 #include <memory>
 #include <unordered_map>
-#include <vector>
 
-// Experimental Mesh structure
-struct SubMesh
+namespace applesauce
 {
-    std::shared_ptr<applesauce::VertexArray> array;
-    std::vector<std::shared_ptr<applesauce::Buffer>> buffers;
-    std::shared_ptr<applesauce::Buffer> indexBuffer;
-    int indexBufferByteOffset;
-    int elementCount;
-};
+    class VertexArray;
+    class Buffer;
 
-struct Mesh
-{
-    std::list<SubMesh> submeshes;
-};
+    struct Material
+    {
+        glm::vec3 baseColor;
+    };
 
-std::unordered_map<std::string, Mesh> loadMeshes(const char *filename);
-*/
+    struct Mesh
+    {
+        struct Primitive
+        {
+            std::shared_ptr<Material> material;
+            std::shared_ptr<VertexArray> vertexArray;
+            std::shared_ptr<Buffer> indexBuffer;
+            int elementCount;
+        };
+        std::list<Primitive> primitives;
+    };
+
+    std::unordered_map<std::string, Mesh> loadMeshes(const char *);
+
+}
+
+// 1. Update makePlaneMesh and makeBoxMesh to return meshes with single primatives.
+// 2. Primatives should come with at least one color (or a reference to some material
+//    structure)
+// 3. Return map of meshes from gltf loader as before
+// 4. Consider how to incorporate nodes
+
+applesauce::Mesh makePlaneMesh(float planeSize);
+applesauce::Mesh makeBoxMesh(float boxSize);

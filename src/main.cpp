@@ -1,13 +1,12 @@
 #define _USE_MATH_DEFINES
 
 #include "applesauce/App.h"
-#include "applesauce/AltMesh.h"
 #include "applesauce/VertexBuffer.h"
 #include "applesauce/VertexArray.h"
 #include "applesauce/Shader.h"
 #include "applesauce/Texture.h"
 #include "applesauce/Camera.h"
-// #include "applesauce/Mesh.h"
+#include "applesauce/Mesh.h"
 
 #define GLM_SWIZZLE
 #include <glm/gtc/matrix_transform.hpp>
@@ -81,8 +80,8 @@ void renderQuad()
     glBindVertexArray(0);
 }
 
-static constexpr unsigned int SHADOW_WIDTH = 1024,
-                              SHADOW_HEIGHT = 1024;
+static constexpr unsigned int SHADOW_WIDTH = 2048,
+                              SHADOW_HEIGHT = 2048;
 
 std::shared_ptr<applesauce::Texture> singleColorTexture(uint32_t color)
 {
