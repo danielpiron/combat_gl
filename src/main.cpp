@@ -519,6 +519,8 @@ public:
         ImGui::ColorEdit3("equator", &triAmbient.equator[0]);
         ImGui::ColorEdit3("ground", &triAmbient.ground[0]);
 
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
         ImGui::End();
 
         ImGui::Render();
