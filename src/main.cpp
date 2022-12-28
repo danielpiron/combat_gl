@@ -481,8 +481,6 @@ public:
             shader->set("AmbientGround", triAmbient.ground);
             shader->set("LightColor", glm::vec3{1.0, 1.0, 1.0});
             shader->set("LightDirection", LightDirection);
-            shader->set("SpecularPower", specularPower);
-            shader->set("SpecularStrength", specularStrength);
 
             shader->set("albedo", 0);
             shader->set("shadowMap", 1);
@@ -498,10 +496,14 @@ public:
                 if (primitive.material)
                 {
                     shader->set("Color", primitive.material->baseColor);
+                    shader->set("MetallicFactor", primitive.material->metallicFactor);
+                    shader->set("RoughnessFactor", primitive.material->roughnessFactor);
                 }
                 else
                 {
                     shader->set("Color", glm::vec3(1.0, 1.0, 1.0));
+                    shader->set("MetallicFactor", 0.0f);
+                    shader->set("RoughnessFactor", 0.25f);
                 }
                 primitive.vertexArray->bind();
                 primitive.indexBuffer->bindTo(applesauce::Buffer::Target::element_array);
@@ -575,9 +577,6 @@ private:
     bool move_camera = false;
 
     glm::vec3 ambient{0.3, 0.3, 0.3};
-
-    float specularPower = 32.0f;
-    float specularStrength = 1.0f;
 
     struct Ambient
     {

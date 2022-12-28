@@ -6,8 +6,8 @@ uniform vec3 Color;
 uniform vec3 LightColor;
 uniform vec3 LightDirection;
 
-uniform float SpecularPower;
-uniform float SpecularStrength;
+uniform float MetallicFactor;
+uniform float RoughnessFactor;
 
 uniform sampler2D albedo;
 uniform sampler2D shadowMap;
@@ -27,10 +27,7 @@ vec2 poissonDisk[4] = vec2[](
   vec2( 0.34495938, 0.29387760 )
 );
 
-const float roughness = 0.5;
-const float metallic = 0.5;
-
-float ggxDistribution(float normalDotHalf) {
+float ggxDistribution(float normalDotHalf, float roughness) {
     float alpha = roughness * roughness;
     float alpha2 = alpha * alpha;
     float normalDotHalf2 = normalDotHalf * normalDotHalf;
@@ -42,7 +39,7 @@ float ggxDistribution(float normalDotHalf) {
     return numerator / demoninator;
 }
 
-float geomSmith(float dp) {
+float geomSmith(float dp, float roughness) {
     float r = roughness + 1.0;
     float k = (r * r) / 8.0;
     return dp / (dp * (1 - k) + k);
@@ -73,7 +70,7 @@ void main() {
 
 
     vec3 F0 = vec3(0.04);
-    F0 = mix(F0, surfaceColor, metallic);
+    F0 = mix(F0, surfaceColor, MetallicFactor);
     vec3 F = schlickFresnel(viewDotHalf, F0);
 
     vec3 kS = F;
@@ -81,8 +78,8 @@ void main() {
      
     vec3 diffuseBRDF = kD * surfaceColor;
 
-    vec3 specularBRDF = (kS * ggxDistribution(normDotHalf) * geomSmith(normDotView) *
-                         geomSmith(normDotLight)) / (4.0 * normDotView * normDotLight + 0.0001);
+    vec3 specularBRDF = (kS * ggxDistribution(normDotHalf, RoughnessFactor) * geomSmith(normDotView, RoughnessFactor) *
+                         geomSmith(normDotLight, RoughnessFactor)) / (4.0 * normDotView * normDotLight + 0.0001);
 
     fColor = vec4(ambient * surfaceColor + shadow * (diffuseBRDF + specularBRDF) * normDotLight, 1.0);
 }

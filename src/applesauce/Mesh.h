@@ -14,6 +14,8 @@ namespace applesauce
     struct Material
     {
         glm::vec3 baseColor;
+        float metallicFactor;
+        float roughnessFactor;
     };
 
     struct Mesh

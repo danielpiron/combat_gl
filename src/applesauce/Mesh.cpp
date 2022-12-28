@@ -309,9 +309,11 @@ namespace applesauce
 
                 // Snag just the base color from the material
                 auto materialColor = gltf.materials[gltfMeshPrimitive.material].pbrMetallicRoughness.baseColorFactor;
+                auto metallicFactor = gltf.materials[gltfMeshPrimitive.material].pbrMetallicRoughness.metallicFactor;
+                auto roughnessFactor = gltf.materials[gltfMeshPrimitive.material].pbrMetallicRoughness.roughnessFactor;
                 glm::vec3 baseColor{materialColor[0], materialColor[1], materialColor[2]};
                 primitives.emplace_back(Mesh::Primitive{
-                    std::make_shared<Material>(Material{baseColor}),
+                    std::make_shared<Material>(Material{baseColor, metallicFactor, roughnessFactor}),
                     vertexArray,
                     indexBuffer,
                     indicesAccessor.count,
