@@ -35,13 +35,13 @@ set(IMGUI_SOURCES ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR
 # Ends: IMGUI Integration
 #
 
+if(MSVC)
+     add_subdirectory(deps/zlib)
+     set(PNG_BUILD_ZLIB ON)
+     set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib ${PROJECT_BINARY_DIR}/deps/zlib)
+     set(ZLIB_LIBRARIES ${PROJECT_BINARY_DIR}/deps/zlib/Debug/zlibstaticd.lib)
+endif()
 
-# if(MSVC)
-#     add_subdirectory(deps/zlib)
-#     set(PNG_BUILD_ZLIB ON)
-#     set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib ${PROJECT_BINARY_DIR}/deps/zlib)
-#     set(ZLIB_LIBRARIES ${PROJECT_BINARY_DIR}/deps/zlib/Debug/zlibstaticd.lib)
-# endif()
 
 set(PNG_TESTS OFF CACHE BOOL "Build libpng tests" FORCE)
 add_subdirectory(deps/libpng)
