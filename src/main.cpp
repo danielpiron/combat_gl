@@ -284,22 +284,22 @@ class Tenk : public Entity
         texture = rm.getTexture("White");
         std::cout << "Spawned Tank" << std::endl;
     }
-    void update(float)
+    void update(float dt)
     {
         float spinSpeed = 0;
-        float speed = 0.1f;
+        float speed = 6.0f;
         if (applesauce::Input::isPressed(GLFW_KEY_A))
         {
-            spinSpeed = 0.05;
+            spinSpeed = 4.0f;
         }
         if (applesauce::Input::isPressed(GLFW_KEY_D))
         {
-            spinSpeed = -0.05;
+            spinSpeed = -4.0f;
         }
         if (applesauce::Input::isPressed(GLFW_KEY_W))
         {
             glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
-            position += direction * speed;
+            position += direction * speed * dt;
         }
         if (applesauce::Input::wasJustPressed(GLFW_KEY_SPACE))
         {
@@ -312,7 +312,7 @@ class Tenk : public Entity
             }
         }
 
-        orientation = glm::rotate(orientation, spinSpeed, glm::vec3{0, 1.0f, 0});
+        orientation = glm::rotate(orientation, spinSpeed * dt, glm::vec3{0, 1.0f, 0});
     }
 };
 

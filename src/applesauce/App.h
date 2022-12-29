@@ -50,16 +50,31 @@ private:
 
         glfwSwapInterval(1);
 
-        float step = 1.0f / 60.0f;
+        double t = 0.0;
+        const double step = 1.0f / 60.0f;
+
+        double currentTime = glfwGetTime();
+        double accumulator = 0;
 
         while (!window.shouldClose())
         {
+            double newTime = glfwGetTime();
+            double frameTime = newTime - currentTime;
+            currentTime = newTime;
+
             applesauce::Input::beginFrame();
             window.pollEvents();
+            
+            accumulator += frameTime;
 
-            update(step);
+            while (accumulator >= step) {
+                update(step);
+                accumulator -= step;
+                t += step;
+            }
+            
             display();
-
+            
             window.swapBuffers();
         }
 
