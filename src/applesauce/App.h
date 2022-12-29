@@ -3,6 +3,7 @@
 #include "Window.h"
 #include "Buffer.h"
 #include "Shader.h"
+#include "Input.h"
 
 #include <map>
 #include <memory>
@@ -53,6 +54,7 @@ private:
 
         while (!window.shouldClose())
         {
+            applesauce::Input::beginFrame();
             window.pollEvents();
 
             update(step);

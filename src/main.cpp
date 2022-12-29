@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 
 #include "applesauce/App.h"
+#include "applesauce/Input.h"
 #include "applesauce/VertexBuffer.h"
 #include "applesauce/VertexArray.h"
 #include "applesauce/Shader.h"
@@ -154,13 +155,47 @@ struct Entity
 
 struct IWorld
 {
-    virtual void spawn(Entity *, const glm::vec3 &position = glm::vec3{0}, const glm::quat &orientation = glm::quat{}) = 0;
+    virtual std::shared_ptr<Entity> spawn(Entity *, const glm::vec3 &position = glm::vec3{0}, const glm::quat &orientation = glm::quat{glm::vec3{0}}) = 0;
 };
 
 float fRand(float max)
 {
     return max * static_cast<float>(rand() % 10000) / 10000.0f;
 }
+
+class Shell : public Entity
+{
+    int timer;
+
+    void init(ResourceManager &rm)
+    {
+        mesh = rm.getMesh("TinyBox");
+        texture = rm.getTexture("White Square");
+        timer = 1000;
+    }
+    void update(float dt)
+    {
+        if (timer == 0)
+        {
+            destroy();
+        }
+        velocity += glm::vec3(0, -9.8f, 0) * dt;
+        position += velocity * dt;
+
+        // bounce
+        if (position.y < 0.125)
+        {
+            position.y = 0.126;
+            velocity.y *= -0.5f;
+            velocity.x += velocity.x * -0.1f;
+            velocity.z += velocity.z * -0.1f;
+        }
+        timer--;
+    }
+
+public:
+    glm::vec3 velocity;
+};
 
 class TinyBlock : public Entity
 {
@@ -247,9 +282,37 @@ class Tenk : public Entity
     {
         mesh = rm.getMesh("Tenk");
         texture = rm.getTexture("White");
+        std::cout << "Spawned Tank" << std::endl;
     }
     void update(float)
     {
+        float spinSpeed = 0;
+        float speed = 0.1f;
+        if (applesauce::Input::isPressed(GLFW_KEY_A))
+        {
+            spinSpeed = 0.05;
+        }
+        if (applesauce::Input::isPressed(GLFW_KEY_D))
+        {
+            spinSpeed = -0.05;
+        }
+        if (applesauce::Input::isPressed(GLFW_KEY_W))
+        {
+            glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
+            position += direction * speed;
+        }
+        if (applesauce::Input::wasJustPressed(GLFW_KEY_SPACE))
+        {
+            auto shell = std::dynamic_pointer_cast<Shell>(world->spawn(new Shell, position + glm::vec3{0, 0.75, 0}));
+            if (shell)
+            {
+                std::cout << "BOOM!" << std::endl;
+                glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
+                shell->velocity = direction * 20.0f;
+            }
+        }
+
+        orientation = glm::rotate(orientation, spinSpeed, glm::vec3{0, 1.0f, 0});
     }
 };
 
@@ -261,12 +324,16 @@ class Triangles : public App,
                   public Window::KeyHandler
 {
 public:
-    void onKeyDown(int) override
+    void onKeyDown(int keycode) override
     {
+        std::cout << "KeyDown: " << keycode << std::endl;
+        applesauce::Input::press(keycode);
     }
 
-    void onKeyUp(int) override
+    void onKeyUp(int keycode) override
     {
+        std::cout << "KeyUp: " << keycode << std::endl;
+        applesauce::Input::release(keycode);
     }
 
     void onScroll(double, double yoffset) override
@@ -377,6 +444,8 @@ public:
         glDrawBuffer(GL_NONE);
         glReadBuffer(GL_NONE);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        applesauce::Input::init();
     }
 
     void update(float dt) override
@@ -439,6 +508,7 @@ public:
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glCullFace(GL_BACK);
+        glEnable(GL_FRAMEBUFFER_SRGB);
 
         shader->use();
 
@@ -449,7 +519,7 @@ public:
         camera.viewport = {width, height};
         glViewport(0, 0, width, height);
 
-        window.clear({0.1f, 0.1f, 0.1f, 1.0f});
+        window.clear({0.01f, 0.01f, 0.01f, 1.0f});
 
         camera.position = glm::mat3(glm::yawPitchRoll(theta, pitch, 0.0f)) * glm::vec3{0, 0, -dist};
         glm::mat4 view = camera.lookAtMatrix(glm::vec3{0});
@@ -549,7 +619,7 @@ public:
         std::cout << "\tDist: " << dist << std::endl;
     }
 
-    void spawn(Entity *entity, const glm::vec3 &position = glm::vec3{0}, const glm::quat &orientation = glm::quat{}) override
+    std::shared_ptr<Entity> spawn(Entity *entity, const glm::vec3 &position = glm::vec3{0}, const glm::quat &orientation = glm::quat{glm::vec3{0}}) override
     {
         auto e = std::shared_ptr<Entity>(entity);
         e->init(*this);
@@ -557,6 +627,7 @@ public:
         e->orientation = orientation;
         e->world = this;
         entities.emplace_back(e);
+        return entities.back();
     }
 
 private:
