@@ -23,8 +23,6 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-#include <png.h>
-
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
@@ -83,45 +81,6 @@ void renderQuad()
 
 static constexpr unsigned int SHADOW_WIDTH = 2048,
                               SHADOW_HEIGHT = 2048;
-
-std::shared_ptr<applesauce::Texture> singleColorTexture(uint32_t color)
-{
-    auto tex = std::make_shared<applesauce::Texture>();
-    tex->setMinFilter(applesauce::Texture::Filter::nearest);
-    tex->setMagFilter(applesauce::Texture::Filter::nearest);
-
-    tex->setImage(1, 1, applesauce::Texture::Format::rgba, &color);
-    return tex;
-};
-
-std::shared_ptr<applesauce::Texture> try_png(const char *filename)
-{
-    png_image image;
-    /* Only the image structure version number needs to be set. */
-    std::memset(&image, 0, sizeof image);
-    image.version = PNG_IMAGE_VERSION;
-
-    if (png_image_begin_read_from_file(&image, filename))
-    {
-        image.format = PNG_FORMAT_RGBA;
-        auto buffer = reinterpret_cast<png_bytep>(malloc(PNG_IMAGE_SIZE(image)));
-
-        if (png_image_finish_read(&image, NULL /*background*/, buffer, 0 /*row_stride*/,
-                                  NULL /*colormap for PNG_FORMAT_FLAG_COLORMAP */))
-        {
-            auto tex = std::make_shared<applesauce::Texture>();
-            tex->setMinFilter(applesauce::Texture::Filter::linearMipMapLinear);
-            tex->setMagFilter(applesauce::Texture::Filter::linear);
-
-            auto ptr = reinterpret_cast<GLubyte *>(buffer);
-            tex->setImage(image.width, image.height, applesauce::Texture::Format::rgba, ptr);
-            tex->generateMipmaps();
-
-            return tex;
-        }
-    }
-    return nullptr;
-}
 
 class ResourceManager
 {
@@ -402,9 +361,9 @@ public:
         shadow = loadShader("shadow");
         quad = loadShader("quad");
 
-        textures.emplace("White", singleColorTexture(0xFFFFFFFF));
-        textures.emplace("Checker", try_png("assets/textures/Checker.png"));
-        textures.emplace("White Square", try_png("assets/textures/White Square.png"));
+        textures.emplace("White", applesauce::singleColorTexture(0xFFFFFFFF));
+        textures.emplace("Checker", applesauce::textureFromPNG("assets/textures/Checker.png"));
+        textures.emplace("White Square", applesauce::textureFromPNG("assets/textures/White Square.png"));
 
         meshes.emplace("TinyBox", std::make_shared<applesauce::Mesh>(makeBoxMesh(0.25f)));
         meshes.emplace("Box", std::make_shared<applesauce::Mesh>(makeBoxMesh(1.0f)));

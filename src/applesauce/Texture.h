@@ -2,6 +2,8 @@
 
 #include "GLResource.h"
 
+#include <memory>
+
 namespace applesauce
 {
     class Texture2D : public GLResource
@@ -260,4 +262,6 @@ namespace applesauce
         }
     };
 
+    std::shared_ptr<Texture> singleColorTexture(uint32_t color);
+    std::shared_ptr<Texture> textureFromPNG(const char* filename);
 }
