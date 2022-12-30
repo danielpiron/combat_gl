@@ -1,6 +1,7 @@
 #define _USE_MATH_DEFINES
 
 #include "applesauce/App.h"
+#include "applesauce/Entity.h"
 #include "applesauce/Input.h"
 #include "applesauce/VertexBuffer.h"
 #include "applesauce/VertexArray.h"
@@ -82,51 +83,16 @@ void renderQuad()
 static constexpr unsigned int SHADOW_WIDTH = 2048,
                               SHADOW_HEIGHT = 2048;
 
-class ResourceManager
-{
-public:
-    virtual std::shared_ptr<applesauce::Mesh> getMesh(const std::string &) = 0;
-    virtual std::shared_ptr<applesauce::Texture2D> getTexture(const std::string &) = 0;
-};
-
-struct IWorld;
-struct Entity
-{
-    glm::vec3 position = glm::vec3{0};
-    glm::quat orientation = glm::quat{};
-    std::shared_ptr<applesauce::Mesh> mesh = nullptr;
-    std::shared_ptr<applesauce::Texture> texture = nullptr;
-
-    glm::mat4 modelMatrix = glm::mat4{1.0f};
-
-    IWorld *world = nullptr;
-
-    virtual void init(ResourceManager &) {}
-    virtual void update(float) {}
-    virtual ~Entity() {}
-    void destroy()
-    {
-        isPendingDestruction = true;
-    }
-
-    bool isPendingDestruction = false;
-};
-
-struct IWorld
-{
-    virtual std::shared_ptr<Entity> spawn(Entity *, const glm::vec3 &position = glm::vec3{0}, const glm::quat &orientation = glm::quat{glm::vec3{0}}) = 0;
-};
-
 float fRand(float max)
 {
     return max * static_cast<float>(rand() % 10000) / 10000.0f;
 }
 
-class Shell : public Entity
+class Shell : public applesauce::Entity
 {
     int timer;
 
-    void init(ResourceManager &rm)
+    void init(applesauce::ResourceManager &rm)
     {
         mesh = rm.getMesh("TinyBox");
         texture = rm.getTexture("White Square");
@@ -156,12 +122,12 @@ public:
     glm::vec3 velocity;
 };
 
-class TinyBlock : public Entity
+class TinyBlock : public applesauce::Entity
 {
     glm::vec3 velocity;
     float timer;
 
-    void init(ResourceManager &rm)
+    void init(applesauce::ResourceManager &rm)
     {
         mesh = rm.getMesh("TinyBox");
         texture = rm.getTexture("White Square");
@@ -194,13 +160,13 @@ class TinyBlock : public Entity
     }
 };
 
-class Block : public Entity
+class Block : public applesauce::Entity
 {
     static constexpr float topSpinSpeed = M_PI * 4;
 
     float timeLimit;
     float timer = 0;
-    void init(ResourceManager &rm)
+    void init(applesauce::ResourceManager &rm)
     {
         mesh = rm.getMesh("Box");
         texture = rm.getTexture("White Square");
@@ -223,9 +189,9 @@ class Block : public Entity
     }
 };
 
-class Floor : public Entity
+class Floor : public applesauce::Entity
 {
-    void init(ResourceManager &rm)
+    void init(applesauce::ResourceManager &rm)
     {
         mesh = rm.getMesh("Plane");
         texture = rm.getTexture("Checker");
@@ -235,9 +201,9 @@ class Floor : public Entity
     }
 };
 
-class Tenk : public Entity
+class Tenk : public applesauce::Entity
 {
-    void init(ResourceManager &rm)
+    void init(applesauce::ResourceManager &rm)
     {
         mesh = rm.getMesh("Tenk");
         texture = rm.getTexture("White");
@@ -276,8 +242,8 @@ class Tenk : public Entity
 };
 
 class Triangles : public App,
-                  public IWorld,
-                  public ResourceManager,
+                  public applesauce::IWorld,
+                  public applesauce::ResourceManager,
                   public Window::ScrollHandler,
                   public Window::MouseHandler,
                   public Window::KeyHandler
@@ -578,9 +544,9 @@ public:
         std::cout << "\tDist: " << dist << std::endl;
     }
 
-    std::shared_ptr<Entity> spawn(Entity *entity, const glm::vec3 &position = glm::vec3{0}, const glm::quat &orientation = glm::quat{glm::vec3{0}}) override
+    std::shared_ptr<applesauce::Entity> spawn(applesauce::Entity *entity, const glm::vec3 &position = glm::vec3{0}, const glm::quat &orientation = glm::quat{glm::vec3{0}}) override
     {
-        auto e = std::shared_ptr<Entity>(entity);
+        auto e = std::shared_ptr<applesauce::Entity>(entity);
         e->init(*this);
         e->position = position;
         e->orientation = orientation;
@@ -594,7 +560,7 @@ private:
     std::shared_ptr<Shader> shadow;
     std::shared_ptr<Shader> quad;
 
-    std::list<std::shared_ptr<Entity>> entities;
+    std::list<std::shared_ptr<applesauce::Entity>> entities;
 
     std::unordered_map<std::string, std::shared_ptr<applesauce::Mesh>> meshes;
     std::unordered_map<std::string, std::shared_ptr<applesauce::Texture>> textures;
