@@ -26,6 +26,9 @@ add_subdirectory(deps/glfw)
 add_subdirectory(deps/glad)
 add_subdirectory(deps/glm)
 
+set(JSON_MultipleHeaders OFF)
+add_subdirectory(deps/json)
+
 
 #
 # Begins: IMGUI Integration
@@ -37,12 +40,12 @@ set(IMGUI_SOURCES ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR
 # Ends: IMGUI Integration
 #
 
-if(MSVC)
-     add_subdirectory(deps/zlib)
-     set(PNG_BUILD_ZLIB ON)
-     set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib ${PROJECT_BINARY_DIR}/deps/zlib)
-     set(ZLIB_LIBRARIES ${PROJECT_BINARY_DIR}/deps/zlib/Debug/zlibstaticd.lib)
-endif()
+if (MSVC)
+    add_subdirectory(deps/zlib)
+    set(PNG_BUILD_ZLIB ON CACHE BOOL "" FORCE)
+    set(ZLIB_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/deps/zlib ${PROJECT_BINARY_DIR}/deps/zlib)
+    set(ZLIB_LIBRARIES ${PROJECT_BINARY_DIR}/deps/zlib/Debug/zlibstaticd.lib)
+endif(MSVC)
 
 
 set(PNG_TESTS OFF CACHE BOOL "Build libpng tests" FORCE)
