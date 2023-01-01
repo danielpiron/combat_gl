@@ -13,6 +13,7 @@ set(CMAKE_CXX_EXTENSIONS False)
 
 file(GLOB APPLESAUCE_FILES src/applesauce/*.cpp src/util/*.cpp)
 file(GLOB APPLESAUCE_HEADERS src/applesauce/*.h)
+file(GLOB GAME_HEADERS src/game/**/*.h)
 
 add_subdirectory(tests)
 
@@ -48,7 +49,7 @@ set(PNG_TESTS OFF CACHE BOOL "Build libpng tests" FORCE)
 add_subdirectory(deps/libpng)
 
 
-add_executable(combat_gl src/main.cpp ${APPLESAUCE_FILES} ${IMGUI_SOURCES} ${APPLESAUCE_HEADERS})
+add_executable(combat_gl src/main.cpp ${APPLESAUCE_FILES} ${IMGUI_SOURCES} ${APPLESAUCE_HEADERS} ${GAME_HEADERS})
 target_link_libraries(combat_gl
  glfw
  glad
