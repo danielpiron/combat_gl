@@ -14,7 +14,8 @@
 static applesauce::Mesh::Primitive primitiveFromComponents(const std::vector<glm::vec3> &vertices,
                                                            const std::vector<glm::vec3> &normals,
                                                            const std::vector<glm::vec2> &texcoords,
-                                                           const std::vector<uint16_t> &indices)
+                                                           const std::vector<uint16_t> &indices,
+                                                           std::shared_ptr<applesauce::Material> material = nullptr)
 {
     const int verticesByteCount = sizeof(vertices[0]) * vertices.size();
     const int normalsByteCount = sizeof(normals[0]) * normals.size();
@@ -52,10 +53,10 @@ static applesauce::Mesh::Primitive primitiveFromComponents(const std::vector<glm
 
     vertexArray->addVertexBuffer(*vertexBuffer, desc);
 
-    return {nullptr, vertexArray, indexBuffer, static_cast<int>(indices.size())};
+    return {material, vertexArray, indexBuffer, static_cast<int>(indices.size())};
 }
 
-applesauce::Mesh makePlaneMesh(float planeSize)
+applesauce::Mesh makePlaneMesh(float planeSize, std::shared_ptr<applesauce::Material> material = nullptr)
 {
     // Plane
     //
@@ -100,10 +101,10 @@ applesauce::Mesh makePlaneMesh(float planeSize)
         1, 3, 2, // Triangle B
     };
 
-    return {{primitiveFromComponents(vertices, normals, texcoords, indices)}};
+    return {{primitiveFromComponents(vertices, normals, texcoords, indices, material)}};
 }
 
-applesauce::Mesh makeBoxMesh(float boxSize)
+applesauce::Mesh makeBoxMesh(float boxSize, std::shared_ptr<applesauce::Material> material)
 {
     //
     //
@@ -239,7 +240,7 @@ applesauce::Mesh makeBoxMesh(float boxSize)
         23,
     };
 
-    return {{primitiveFromComponents(vertices, normals, texcoords, indices)}};
+    return {{primitiveFromComponents(vertices, normals, texcoords, indices, material)}};
 }
 
 static std::string readFileText(const char *filename)

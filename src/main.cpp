@@ -40,7 +40,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 static constexpr unsigned int SHADOW_WIDTH = 2048,
                               SHADOW_HEIGHT = 2048;
 
@@ -134,16 +133,28 @@ public:
         textures.emplace("Checker", applesauce::textureFromPNG("assets/textures/Checker.png"));
         textures.emplace("White Square", applesauce::textureFromPNG("assets/textures/White Square.png"));
 
-        meshes.emplace("TinyBox", std::make_shared<applesauce::Mesh>(makeBoxMesh(0.25f)));
-        meshes.emplace("Box", std::make_shared<applesauce::Mesh>(makeBoxMesh(1.0f)));
-        meshes.emplace("Plane", std::make_shared<applesauce::Mesh>(makePlaneMesh(20)));
+        auto boxMaterial = std::make_shared<applesauce::Material>(applesauce::Material{{1.0f, 1.0f, 1.0f}, // baseColor - white
+                                                                                       0.5,                // roughnessFactor
+                                                                                       0.5,                // metallicFactor
+                                                                                       getTexture("White Square")});
 
-        for (const auto &[name, mesh] : applesauce::loadMeshes("assets/gltf/tenk7.gltf"))
+        auto checkerMaterial = std::make_shared<applesauce::Material>(applesauce::Material{{1.0f, 1.0f, 1.0f}, // baseColor - white
+                                                                                           0.5,                // roughnessFactor
+                                                                                           0.5,                // metallicFactor
+                                                                                           getTexture("Checker")});
+
+        meshes.emplace("TinyBox", std::make_shared<applesauce::Mesh>(makeBoxMesh(0.25f, boxMaterial)));
+        meshes.emplace("Box", std::make_shared<applesauce::Mesh>(makeBoxMesh(1.0f, boxMaterial)));
+        meshes.emplace("Plane", std::make_shared<applesauce::Mesh>(makePlaneMesh(20, checkerMaterial)));
+
+        for (auto &[name, mesh] : applesauce::loadMeshes("assets/gltf/tenk7.gltf"))
         {
+            for (auto prim : mesh.primitives)
+            {
+                prim.material->baseTexture = getTexture("White");
+            }
             meshes.emplace(name, std::make_shared<applesauce::Mesh>(mesh));
         }
-
-        meshes.emplace("Plane", std::make_shared<applesauce::Mesh>(makePlaneMesh(20)));
 
         spawn(new Floor());
         spawn(new Tenk());
@@ -273,7 +284,6 @@ public:
             shader->set("ModelViewMatrix", modelView);
             shader->set("LightViewMatrix", LightViewMatrix);
             shader->set("NormalMatrix", normalMatrix);
-            // shader->set("Ambient", ambient);
             shader->set("AmbientSky", triAmbient.sky);
             shader->set("AmbientEquator", triAmbient.equator);
             shader->set("AmbientGround", triAmbient.ground);
@@ -283,19 +293,20 @@ public:
             shader->set("albedo", 0);
             shader->set("shadowMap", 1);
 
-            glActiveTexture(GL_TEXTURE0);
-            if (entity->texture)
-                entity->texture->bind();
-            else
-                glBindTexture(GL_TEXTURE_2D, 0);
-
             for (const auto &primitive : entity->mesh->primitives)
             {
                 if (primitive.material)
                 {
+                    const auto &material = primitive.material;
                     shader->set("Color", primitive.material->baseColor);
                     shader->set("MetallicFactor", primitive.material->metallicFactor);
                     shader->set("RoughnessFactor", primitive.material->roughnessFactor);
+
+                    glActiveTexture(GL_TEXTURE0);
+                    if (material->baseTexture)
+                        material->baseTexture->bind();
+                    else
+                        glBindTexture(GL_TEXTURE_2D, 0);
                 }
                 else
                 {

@@ -10,10 +10,9 @@ class Shell : public applesauce::Entity
 {
     int timer;
 
-    void init(applesauce::ResourceManager& rm)
+    void init(applesauce::ResourceManager &rm)
     {
         mesh = rm.getMesh("TinyBox");
-        texture = rm.getTexture("White Square");
         timer = 1000;
     }
     void update(float dt)
@@ -40,13 +39,11 @@ public:
     glm::vec3 velocity;
 };
 
-
 class Tenk : public applesauce::Entity
 {
-    void init(applesauce::ResourceManager& rm)
+    void init(applesauce::ResourceManager &rm)
     {
         mesh = rm.getMesh("Tenk");
-        texture = rm.getTexture("White");
     }
     void update(float dt)
     {
@@ -62,19 +59,19 @@ class Tenk : public applesauce::Entity
         }
         if (applesauce::Input::isPressed(GLFW_KEY_W))
         {
-            glm::vec3 direction = glm::mat3(orientation) * glm::vec3{ 0, 0, -1.0f };
+            glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
             position += direction * speed * dt;
         }
         if (applesauce::Input::wasJustPressed(GLFW_KEY_SPACE))
         {
-            auto shell = std::dynamic_pointer_cast<Shell>(world->spawn(new Shell, position + glm::vec3{ 0, 0.75, 0 }));
+            auto shell = std::dynamic_pointer_cast<Shell>(world->spawn(new Shell, position + glm::vec3{0, 0.75, 0}));
             if (shell)
             {
-                glm::vec3 direction = glm::mat3(orientation) * glm::vec3{ 0, 0, -1.0f };
+                glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
                 shell->velocity = direction * 20.0f;
             }
         }
 
-        orientation = glm::rotate(orientation, spinSpeed * dt, glm::vec3{ 0, 1.0f, 0 });
+        orientation = glm::rotate(orientation, spinSpeed * dt, glm::vec3{0, 1.0f, 0});
     }
 };
