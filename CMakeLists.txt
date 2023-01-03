@@ -78,6 +78,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/quad.vs.glsl assets/sh
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders/quad.fs.glsl assets/shaders/quad.fs.glsl COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/tenk6a.gltf assets/gltf/tenk6a.gltf COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/tenk7.gltf assets/gltf/tenk7.gltf COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/tenk9aa.gltf assets/gltf/tenk9aa.gltf COPYONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/assets/gltf/wall-and-floor.gltf" "assets/gltf/wall-and-floor.gltf" COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/textures/Checker.png assets/textures/Checker.png COPYONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/assets/textures/White Square.png" "assets/textures/White Square.png" COPYONLY)

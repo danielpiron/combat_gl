@@ -147,7 +147,7 @@ public:
         meshes.emplace("Box", std::make_shared<applesauce::Mesh>(makeBoxMesh(1.0f, boxMaterial)));
         meshes.emplace("Plane", std::make_shared<applesauce::Mesh>(makePlaneMesh(20, checkerMaterial)));
 
-        for (auto &[name, mesh] : applesauce::loadMeshes("assets/gltf/tenk7.gltf"))
+        for (auto &[name, mesh] : applesauce::loadMeshes("assets/gltf/tenk9aa.gltf"))
         {
             for (auto prim : mesh.primitives)
             {
