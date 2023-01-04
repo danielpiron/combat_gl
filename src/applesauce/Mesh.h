@@ -44,4 +44,5 @@ namespace applesauce
 // 4. Consider how to incorporate nodes
 
 applesauce::Mesh makePlaneMesh(float planeSize, const std::shared_ptr<applesauce::Material> material);
+applesauce::Mesh makePlaneMesh(float planeWidth, float planeHeight, const std::shared_ptr<applesauce::Material> material);
 applesauce::Mesh makeBoxMesh(float boxSize, const std::shared_ptr<applesauce::Material> material);

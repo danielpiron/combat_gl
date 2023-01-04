@@ -12,6 +12,7 @@
 #include "applesauce/Mesh.h"
 
 #include "game/entities/Tenk.h"
+#include "game/entities/Level.h"
 #include "game/entities/TestArea.h"
 
 #define GLM_SWIZZLE
@@ -145,7 +146,6 @@ public:
 
         meshes.emplace("TinyBox", std::make_shared<applesauce::Mesh>(makeBoxMesh(0.25f, boxMaterial)));
         meshes.emplace("Box", std::make_shared<applesauce::Mesh>(makeBoxMesh(1.0f, boxMaterial)));
-        meshes.emplace("Plane", std::make_shared<applesauce::Mesh>(makePlaneMesh(20, checkerMaterial)));
 
         for (auto &[name, mesh] : applesauce::loadMeshes("assets/gltf/tenk9aa.gltf"))
         {
@@ -156,24 +156,69 @@ public:
             meshes.emplace(name, std::make_shared<applesauce::Mesh>(mesh));
         }
 
-        spawn(new Floor());
-        spawn(new Tenk());
-
-        int numberOfObjects = 20;
-        float radius = 5.0f;
-
-        for (int i = 0; i < numberOfObjects; i++)
+        for (auto &[name, mesh] : applesauce::loadMeshes("assets/gltf/wall-and-floor.gltf"))
         {
-            float angle = i * M_PI * 2 / numberOfObjects;
-            float x = cosf(angle) * radius;
-            float z = sinf(angle) * radius;
-            glm::vec3 position{x, 0.5, z};
-
-            glm::quat orientation{glm::vec3{0, -angle, 0}};
-            spawn(new Block(), position, orientation);
+            for (auto prim : mesh.primitives)
+            {
+                prim.material->baseTexture = getTexture("White");
+            }
+            meshes.emplace(name, std::make_shared<applesauce::Mesh>(mesh));
         }
 
-        // Init shadow mapping bits
+        const char *playField = "********************************\n"
+                                "*                              *\n"
+                                "*                              *\n"
+                                "*              **              *\n"
+                                "*              **              *\n"
+                                "*              **              *\n"
+                                "*    **                  **    *\n"
+                                "*     *                  *     *\n"
+                                "*  T  *   ***      ***   *  T  *\n"
+                                "*     *   ***      ***   *     *\n"
+                                "*     *                  *     *\n"
+                                "*    **                  **    *\n"
+                                "*              **              *\n"
+                                "*              **              *\n"
+                                "*              **              *\n"
+                                "*                              *\n"
+                                "*                              *\n"
+                                "********************************";
+
+        std::stringstream stream(playField);
+        std::string line;
+
+        int row = 0;
+        int maxCol = -1;
+        while (std::getline(stream, line, '\n'))
+        {
+            int col = 0;
+            for (const auto &character : line)
+            {
+                const glm::vec3 position{col, 0, row};
+                switch (character)
+                {
+                case '*':
+                    spawn(new Wall(), position);
+                    break;
+                case 'T':
+                    spawn(new Tenk(), position);
+                    break;
+                }
+
+                col++;
+            }
+            maxCol = std::max(maxCol, col);
+            row++;
+        }
+
+        for (auto &entity : entities)
+        {
+            entity->position.x -= maxCol / 2;
+            entity->position.z -= row / 2;
+        }
+
+        meshes.emplace("Plane", std::make_shared<applesauce::Mesh>(makePlaneMesh(maxCol - 1, row - 1, checkerMaterial)));
+        spawn(new Floor());
 
         glGenFramebuffers(1, &depthMapFBO);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);

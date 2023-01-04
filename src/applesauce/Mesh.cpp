@@ -58,6 +58,11 @@ static applesauce::Mesh::Primitive primitiveFromComponents(const std::vector<glm
 
 applesauce::Mesh makePlaneMesh(float planeSize, std::shared_ptr<applesauce::Material> material = nullptr)
 {
+    return makePlaneMesh(planeSize, planeSize, material);
+}
+
+applesauce::Mesh makePlaneMesh(float planeWidth, float planeDepth, std::shared_ptr<applesauce::Material> material = nullptr)
+{
     // Plane
     //
     //  (-0.5, 0, -0.5)   (0.5, 0, -0.5)
@@ -72,12 +77,13 @@ applesauce::Mesh makePlaneMesh(float planeSize, std::shared_ptr<applesauce::Mate
     //   A. 0, 1, 2
     //   B. 1, 3, 2
 
-    float halfSize = planeSize / 2.0f;
+    float halfWidth = planeWidth / 2.0f;
+    float halfDepth = planeDepth / 2.0f;
     std::vector<glm::vec3> vertices{
-        {-halfSize, 0, halfSize},  // 0
-        {halfSize, 0, halfSize},   // 1
-        {-halfSize, 0, -halfSize}, // 2
-        {halfSize, 0, -halfSize},  // 3
+        {-halfWidth, 0, halfDepth},  // 0
+        {halfWidth, 0, halfDepth},   // 1
+        {-halfWidth, 0, -halfDepth}, // 2
+        {halfWidth, 0, -halfDepth},  // 3
     };
 
     // Normals all face "up"
@@ -88,12 +94,13 @@ applesauce::Mesh makePlaneMesh(float planeSize, std::shared_ptr<applesauce::Mate
         {0, 1.0f, 0}, // and up
     };
 
-    float uvSize = halfSize;
+    float uSize = halfWidth;
+    float vSize = halfDepth;
     std::vector<glm::vec2> texcoords{
-        {0, uvSize},      // 0 - Near left
-        {uvSize, uvSize}, // 1 - Near right
-        {0, 0},           // 2 - Far left
-        {uvSize, 0},      // 3 - Far Right
+        {0, vSize},     // 0 - Near left
+        {uSize, vSize}, // 1 - Near right
+        {0, 0},         // 2 - Far left
+        {uSize, 0},     // 3 - Far Right
     };
 
     std::vector<uint16_t> indices{
