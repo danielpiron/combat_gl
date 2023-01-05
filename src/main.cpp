@@ -375,6 +375,12 @@ public:
 
         ImGui::ColorEdit3("tenk", (float *)&getMesh("Tenk")->primitives.front().material->baseColor);
 
+        ImGui::SliderFloat("floorRoughness", (float *)&getMesh("Plane")->primitives.front().material->roughnessFactor, 0, 1.0f);
+        ImGui::SliderFloat("floorMetallic", (float *)&getMesh("Plane")->primitives.front().material->metallicFactor, 0, 1.0f);
+
+        ImGui::SliderFloat("wallRoughness", (float *)&getMesh("Wall")->primitives.front().material->roughnessFactor, 0, 1.0f);
+        ImGui::SliderFloat("wallMetallic", (float *)&getMesh("Wall")->primitives.front().material->metallicFactor, 0, 1.0f);
+
         ImGui::SliderFloat("lightDist", &lightDist, 0.001f, 40.0f);
         ImGui::SliderFloat("lightSize", &lightSize, 0.001f, 40.0f);
         ImGui::SliderFloat("lightNear", &lightNear, 0.001f, 40.0f);
