@@ -9,13 +9,13 @@
 * [X] "Entity" into its own file
 * [X] Each entity should have its own .h file defining behavior
 * [X] Move the render quad code into a Debug(.h/.cpp) file or something
+* [X] Fix shadow mapping area 
+* [X] Apply color to walls and floors
 * [ ] Update Input query functions
   * [ ] if (applesauce:::Input::keyIsHeldDown(GLFW_KEY_SPACE)
   * [ ] if (applesauce::Input::keyWasJustPressed(GLFW_KEY_A))
 * [ ] Encapsulate frame buffer
 * [ ] Camera behavior should be defined by Entity logic
 * [ ] Each tank needs to be bound to different controls.
-* [X] Fix shadow mapping area 
 * [ ] Figure out how to size shadow "frustum" dynamically
-* [ ] Apply color to walls and floors
 * [ ] Load levels from files

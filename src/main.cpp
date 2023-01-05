@@ -139,7 +139,7 @@ public:
                                                                                        0.5,                // metallicFactor
                                                                                        getTexture("White Square")});
 
-        auto checkerMaterial = std::make_shared<applesauce::Material>(applesauce::Material{{1.0f, 1.0f, 1.0f}, // baseColor - white
+        auto checkerMaterial = std::make_shared<applesauce::Material>(applesauce::Material{{1.0f, 0.6f, 0.1f}, // baseColor - white
                                                                                            0.5,                // roughnessFactor
                                                                                            0.5,                // metallicFactor
                                                                                            getTexture("Checker")});
@@ -161,6 +161,7 @@ public:
             for (auto prim : mesh.primitives)
             {
                 prim.material->baseTexture = getTexture("White");
+                prim.material->baseColor = glm::vec3{0.3, 0.3, 1.0};
             }
             meshes.emplace(name, std::make_shared<applesauce::Mesh>(mesh));
         }
