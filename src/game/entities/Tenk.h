@@ -41,6 +41,18 @@ public:
 
 class Tenk : public applesauce::Entity
 {
+public:
+    Tenk(int tenkId)
+    {
+        if (tenkId == 1)
+        {
+            leftKey = GLFW_KEY_LEFT;
+            rightKey = GLFW_KEY_RIGHT;
+            forwardKey = GLFW_KEY_UP;
+            shootKey = GLFW_KEY_PERIOD;
+        }
+    }
+
     void init(applesauce::ResourceManager &rm)
     {
         mesh = rm.getMesh("Tenk");
@@ -49,20 +61,20 @@ class Tenk : public applesauce::Entity
     {
         float spinSpeed = 0;
         float speed = 6.0f;
-        if (applesauce::Input::isPressed(GLFW_KEY_A))
+        if (applesauce::Input::isPressed(leftKey))
         {
             spinSpeed = 4.0f;
         }
-        if (applesauce::Input::isPressed(GLFW_KEY_D))
+        if (applesauce::Input::isPressed(rightKey))
         {
             spinSpeed = -4.0f;
         }
-        if (applesauce::Input::isPressed(GLFW_KEY_W))
+        if (applesauce::Input::isPressed(forwardKey))
         {
             glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
             position += direction * speed * dt;
         }
-        if (applesauce::Input::wasJustPressed(GLFW_KEY_SPACE))
+        if (applesauce::Input::wasJustPressed(shootKey))
         {
             auto shell = std::dynamic_pointer_cast<Shell>(world->spawn(new Shell, position + glm::vec3{0, 0.75, 0}));
             if (shell)
@@ -74,4 +86,10 @@ class Tenk : public applesauce::Entity
 
         orientation = glm::rotate(orientation, spinSpeed * dt, glm::vec3{0, 1.0f, 0});
     }
+
+private:
+    int leftKey = GLFW_KEY_A;
+    int rightKey = GLFW_KEY_D;
+    int forwardKey = GLFW_KEY_W;
+    int shootKey = GLFW_KEY_SPACE;
 };

@@ -11,11 +11,11 @@
 * [X] Move the render quad code into a Debug(.h/.cpp) file or something
 * [X] Fix shadow mapping area 
 * [X] Apply color to walls and floors
+* [X] Each tank needs to be bound to different controls.
 * [ ] Update Input query functions
   * [ ] if (applesauce:::Input::keyIsHeldDown(GLFW_KEY_SPACE)
   * [ ] if (applesauce::Input::keyWasJustPressed(GLFW_KEY_A))
 * [ ] Encapsulate frame buffer
 * [ ] Camera behavior should be defined by Entity logic
-* [ ] Each tank needs to be bound to different controls.
 * [ ] Figure out how to size shadow "frustum" dynamically
 * [ ] Load levels from files

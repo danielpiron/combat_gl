@@ -188,6 +188,7 @@ public:
         std::stringstream stream(playField);
         std::string line;
 
+        int tankId = 0;
         int row = 0;
         int maxCol = -1;
         while (std::getline(stream, line, '\n'))
@@ -202,7 +203,7 @@ public:
                     spawn(new Wall(), position);
                     break;
                 case 'T':
-                    spawn(new Tenk(), position);
+                    spawn(new Tenk(tankId++), position);
                     break;
                 }
 
