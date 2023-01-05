@@ -255,22 +255,19 @@ public:
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
-        /*
-                glEnable(GL_POLYGON_OFFSET_FILL);
-                glPolygonOffset(2.0f, 4.0f);
-                */
-
         glCullFace(GL_FRONT);
 
-        static float lightDist = 11.2;
-        static float lightSize = 12.0f;
+        static float lightDist = 10.0f;
+        static float lightSize = 16.0f;
+        static float lightNear = 0.1f;
+        static float lightFar = 20.0f;
         shadow->use();
         glm::mat4 lightSpaceMatrix;
         { // Shadow map part
             glm::mat4 view = glm::lookAt(lightDir * lightDist,
                                          glm::vec3(0),
                                          glm::vec3(0, 1, 0));
-            glm::mat4 projection = glm::ortho(-lightSize, lightSize, -lightSize, lightSize, 0.1f, 20.0f);
+            glm::mat4 projection = glm::ortho(-lightSize, lightSize, -lightSize, lightSize, lightNear, lightFar);
             lightSpaceMatrix = projection * view;
 
             for (const auto &entity : entities)
@@ -376,6 +373,11 @@ public:
         ImGui::ColorEdit3("ground", &triAmbient.ground[0]);
 
         ImGui::ColorEdit3("tenk", (float *)&getMesh("Tenk")->primitives.front().material->baseColor);
+
+        ImGui::SliderFloat("lightDist", &lightDist, 0.001f, 40.0f);
+        ImGui::SliderFloat("lightSize", &lightSize, 0.001f, 40.0f);
+        ImGui::SliderFloat("lightNear", &lightNear, 0.001f, 40.0f);
+        ImGui::SliderFloat("lightFar", &lightFar, 0.001f, 40.0f);
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 

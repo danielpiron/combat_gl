@@ -5,6 +5,7 @@
       style. (e.g. "#139aCfe"). These could be potentially be used to generate textures as well
       and give them names. Ideally, if a texture hasn't already been registered, it should be
       loaded or generated.
+      * [ ] Or just have a boolean on which to use texture and/or baseColor
 * [X] "Entity" into its own file
 * [X] Each entity should have its own .h file defining behavior
 * [X] Move the render quad code into a Debug(.h/.cpp) file or something
@@ -13,3 +14,8 @@
   * [ ] if (applesauce::Input::keyWasJustPressed(GLFW_KEY_A))
 * [ ] Encapsulate frame buffer
 * [ ] Camera behavior should be defined by Entity logic
+* [ ] Each tank needs to be bound to different controls.
+* [X] Fix shadow mapping area 
+* [ ] Figure out how to size shadow "frustum" dynamically
+* [ ] Apply color to walls and floors
+* [ ] Load levels from files
