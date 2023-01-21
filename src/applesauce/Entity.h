@@ -34,6 +34,7 @@ namespace applesauce
         glm::mat4 modelMatrix = glm::mat4{1.0f};
 
         IWorld *world = nullptr;
+        bool collidable = false;
 
         virtual void init(ResourceManager &) {}
         virtual void update(float) {}

@@ -14,6 +14,7 @@
 #include "game/entities/Tenk.h"
 #include "game/entities/Level.h"
 #include "game/entities/TestArea.h"
+#include "game/Collision.h"
 
 #define GLM_SWIZZLE
 #include <glm/gtc/matrix_transform.hpp>
@@ -43,6 +44,25 @@
 
 static constexpr unsigned int SHADOW_WIDTH = 2048,
                               SHADOW_HEIGHT = 2048;
+
+Quad quadFromEntity(const applesauce::Entity &entity, float size)
+{
+    float halfSize = size / 2.0f;
+    glm::vec4 upperLeft{-halfSize, 0, -halfSize, 1.0f};
+    glm::vec4 lowerLeft{-halfSize, 0, halfSize, 1.0f};
+    glm::vec4 lowerRight{halfSize, 0, halfSize, 1.0f};
+    glm::vec4 upperRight{halfSize, 0, -halfSize, 1.0f};
+
+    auto tfUpperLeft = entity.modelMatrix * upperLeft;
+    auto tfLowerLeft = entity.modelMatrix * lowerLeft;
+    auto tfLowerRight = entity.modelMatrix * lowerRight;
+    auto tfUpperRight = entity.modelMatrix * upperRight;
+
+    return {glm::vec2{tfUpperLeft.x, tfUpperLeft.z},
+            glm::vec2{tfLowerLeft.x, tfLowerLeft.z},
+            glm::vec2{tfLowerRight.x, tfLowerRight.z},
+            glm::vec2{tfUpperRight.x, tfUpperRight.z}};
+}
 
 class Triangles : public App,
                   public applesauce::IWorld,
@@ -167,14 +187,14 @@ public:
         }
 
         const char *playField = "********************************\n"
-                                "*                              *\n"
+                                "**                             *\n"
                                 "*                              *\n"
                                 "*              **              *\n"
                                 "*              **              *\n"
                                 "*              **              *\n"
                                 "*    **                  **    *\n"
                                 "*     *                  *     *\n"
-                                "*  T  *   ***      ***   *  T  *\n"
+                                "*  T  *   ***      ***   *     *\n"
                                 "*     *   ***      ***   *     *\n"
                                 "*     *                  *     *\n"
                                 "*    **                  **    *\n"
@@ -184,6 +204,8 @@ public:
                                 "*                              *\n"
                                 "*                              *\n"
                                 "********************************";
+
+        prepareTileMap(playField, tm);
 
         std::stringstream stream(playField);
         std::string line;
@@ -203,7 +225,8 @@ public:
                     spawn(new Wall(), position);
                     break;
                 case 'T':
-                    spawn(new Tenk(tankId++), position);
+                    auto t = spawn(new Tenk(tankId++), position);
+                    t->collidable = true;
                     break;
                 }
 
@@ -215,8 +238,8 @@ public:
 
         for (auto &entity : entities)
         {
-            entity->position.x -= maxCol / 2;
-            entity->position.z -= row / 2;
+            entity->position.x -= static_cast<float>(maxCol) / 2.0f;
+            entity->position.z -= static_cast<float>(row) / 2.0f;
         }
 
         meshes.emplace("Plane", std::make_shared<applesauce::Mesh>(makePlaneMesh(maxCol - 1, row - 1, checkerMaterial)));
@@ -242,6 +265,19 @@ public:
         for (auto &entity : entities)
         {
             entity->update(dt);
+
+            if (entity->collidable)
+            {
+                glm::vec2 ejectionVector;
+                // TODO: Can we avoid updating this matrix twice?
+                entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
+                if (tm.checkCollision(quadFromEntity(*entity, 1.7f), ejectionVector))
+                {
+                    entity->position.x += ejectionVector.x;
+                    entity->position.z += ejectionVector.y;
+                }
+            }
+
             // Update modelMatrix of all entities in preparation for render
             entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
         }
@@ -460,6 +496,8 @@ private:
     // Shadow map bits
     GLuint depthMapFBO;
     std::shared_ptr<applesauce::DepthTexture2D> depthMap;
+
+    TileMap tm;
 };
 
 int main()
