@@ -194,7 +194,7 @@ public:
                                 "*              **              *\n"
                                 "*    **                  **    *\n"
                                 "*     *                  *     *\n"
-                                "*  T  *   ***      ***   *     *\n"
+                                "*  T  *   ***      ***   *  T  *\n"
                                 "*     *   ***      ***   *     *\n"
                                 "*     *                  *     *\n"
                                 "*    **                  **    *\n"
@@ -471,9 +471,9 @@ private:
     std::unordered_map<std::string, std::shared_ptr<applesauce::Texture>> textures;
 
     Camera camera;
-    float pitch = 0.363528;
-    float theta = 3.3335;
-    float dist = 10.1983;
+    float pitch = 0.912121;
+    float theta = 3.2649;
+    float dist = 21.7568;
 
     double last_xpos = 0;
     double last_ypos = 0;
