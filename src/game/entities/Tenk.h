@@ -10,18 +10,19 @@ class Shell : public applesauce::Entity
 {
     int timer;
 
-    void init(applesauce::ResourceManager &rm)
+    void init(applesauce::ResourceManager &rm) override
     {
         mesh = rm.getMesh("TinyBox");
         timer = 1000;
+        collidable = true;
+        collisionSize = 0.25;
     }
-    void update(float dt)
+    void update(float dt) override
     {
         if (timer == 0)
         {
             destroy();
         }
-        velocity += glm::vec3(0, -9.8f, 0) * dt;
         position += velocity * dt;
 
         // bounce
@@ -33,6 +34,11 @@ class Shell : public applesauce::Entity
             velocity.z += velocity.z * -0.1f;
         }
         timer--;
+    }
+
+    void onTouch() override
+    {
+        destroy();
     }
 
 public:
@@ -53,11 +59,13 @@ public:
         }
     }
 
-    void init(applesauce::ResourceManager &rm)
+    void init(applesauce::ResourceManager &rm) override
     {
         mesh = rm.getMesh("Tenk");
+        collidable = true;
+        collisionSize = 1.7f;
     }
-    void update(float dt)
+    void update(float dt) override
     {
         float spinSpeed = 0;
         float speed = 6.0f;

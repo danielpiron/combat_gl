@@ -35,6 +35,7 @@ namespace applesauce
 
         IWorld *world = nullptr;
         bool collidable = false;
+        float collisionSize = 0;
 
         virtual void init(ResourceManager &) {}
         virtual void update(float) {}
@@ -45,6 +46,8 @@ namespace applesauce
         }
 
         bool isPendingDestruction = false;
+
+        virtual void onTouch() {}
     };
 
 }

@@ -226,7 +226,6 @@ public:
                     break;
                 case 'T':
                     auto t = spawn(new Tenk(tankId++), position);
-                    t->collidable = true;
                     break;
                 }
 
@@ -271,10 +270,11 @@ public:
                 glm::vec2 ejectionVector;
                 // TODO: Can we avoid updating this matrix twice?
                 entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
-                if (tm.checkCollision(quadFromEntity(*entity, 1.7f), ejectionVector))
+                if (tm.checkCollision(quadFromEntity(*entity, entity->collisionSize), ejectionVector))
                 {
                     entity->position.x += ejectionVector.x;
                     entity->position.z += ejectionVector.y;
+                    entity->onTouch();
                 }
             }
 

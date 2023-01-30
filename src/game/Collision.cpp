@@ -51,19 +51,7 @@ static bool checkCollision(const AABB &aabb, const Quad &quad, glm::vec2 &normal
         {0, 1.0f},
     };
 
-    std::cout << "Quad:"
-              << "{" << quad.points[0].x << ", " << quad.points[0].y << "}, "
-              << "{" << quad.points[1].x << ", " << quad.points[1].y << "}, "
-              << "{" << quad.points[2].x << ", " << quad.points[2].y << "}, "
-              << "{" << quad.points[3].x << ", " << quad.points[3].y << "}" << std::endl;
-
     Quad aabbQuad = AABB2Quad(aabb);
-
-    std::cout << "AABBQuad:"
-              << "{" << aabbQuad.points[0].x << ", " << aabbQuad.points[0].y << "}, "
-              << "{" << aabbQuad.points[1].x << ", " << aabbQuad.points[1].y << "}, "
-              << "{" << aabbQuad.points[2].x << ", " << aabbQuad.points[2].y << "}, "
-              << "{" << aabbQuad.points[3].x << ", " << aabbQuad.points[3].y << "}" << std::endl;
 
     minOverlap = std::numeric_limits<float>::max();
     for (size_t i = 0; i < 2; i++)
@@ -133,7 +121,6 @@ bool TileMap::checkCollision(const Quad &boxQuad, glm::vec2 &ejectionVector)
     {
         for (size_t j = minCoords.first; j <= maxCoords.first; j++)
         {
-            std::cout << "Checking tile " << j << ", " << i << std::endl;
             if (!isCollidable(j, i))
                 continue;
 
