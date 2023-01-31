@@ -49,6 +49,7 @@ namespace applesauce
         bool isPendingDestruction = false;
 
         virtual void onTouch() {}
+        virtual void onTouch(Entity &) {}
     };
 
 }

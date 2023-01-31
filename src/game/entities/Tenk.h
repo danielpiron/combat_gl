@@ -41,6 +41,11 @@ class Shell : public applesauce::Entity
         destroy();
     }
 
+    void onTouch(applesauce::Entity &) override
+    {
+        destroy();
+    }
+
 public:
     glm::vec3 velocity;
 };
@@ -64,23 +69,33 @@ public:
         mesh = rm.getMesh("Tenk");
         collidable = true;
         collisionSize = 1.7f;
+        spinOutTimer = 0.0f;
     }
     void update(float dt) override
     {
         float spinSpeed = 0;
-        float speed = 6.0f;
-        if (applesauce::Input::isPressed(leftKey))
+        if (spinOutTimer > 0)
         {
-            spinSpeed = 4.0f;
+            spinSpeed = 20.0f;
+            spinOutTimer -= dt;
         }
-        if (applesauce::Input::isPressed(rightKey))
+        else
         {
-            spinSpeed = -4.0f;
-        }
-        if (applesauce::Input::isPressed(forwardKey))
-        {
-            glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
-            position += direction * speed * dt;
+
+            float speed = 6.0f;
+            if (applesauce::Input::isPressed(leftKey))
+            {
+                spinSpeed = 4.0f;
+            }
+            if (applesauce::Input::isPressed(rightKey))
+            {
+                spinSpeed = -4.0f;
+            }
+            if (applesauce::Input::isPressed(forwardKey))
+            {
+                glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
+                position += direction * speed * dt;
+            }
         }
         if (applesauce::Input::wasJustPressed(shootKey))
         {
@@ -96,9 +111,21 @@ public:
         orientation = glm::rotate(orientation, spinSpeed * dt, glm::vec3{0, 1.0f, 0});
     }
 
+    // TODO: We should probably be receiving a smart pointer to the entity
+    // One way or another, we need a way to determine that the thing is a
+    // shell. For now, we'll go with originator != nullptr
+    void onTouch(applesauce::Entity &e) override
+    {
+        if (e.originator != nullptr)
+        {
+            spinOutTimer = 1.0f;
+        }
+    }
+
 private:
     int leftKey = GLFW_KEY_A;
     int rightKey = GLFW_KEY_D;
     int forwardKey = GLFW_KEY_W;
     int shootKey = GLFW_KEY_SPACE;
+    float spinOutTimer;
 };

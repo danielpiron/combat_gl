@@ -298,8 +298,8 @@ public:
 
                     if (checkCollision(aabbFromEntity(*entA), aabbFromEntity(*entB)))
                     {
-                        entA->onTouch();
-                        entB->onTouch();
+                        entA->onTouch(*entB);
+                        entB->onTouch(*entA);
                     }
                 }
             }
