@@ -28,6 +28,7 @@ namespace applesauce
     struct Entity
     {
         glm::vec3 position = glm::vec3{0};
+        glm::vec3 velocity = glm::vec3(0);
         glm::quat orientation = glm::quat{};
         std::shared_ptr<Mesh> mesh = nullptr;
 

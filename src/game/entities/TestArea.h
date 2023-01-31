@@ -13,7 +13,6 @@ float fRand(float max)
 
 class TinyBlock : public applesauce::Entity
 {
-    glm::vec3 velocity;
     float timer;
 
     void init(applesauce::ResourceManager &rm)

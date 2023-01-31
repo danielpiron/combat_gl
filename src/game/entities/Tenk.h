@@ -47,7 +47,6 @@ class Shell : public applesauce::Entity
     }
 
 public:
-    glm::vec3 velocity;
 };
 
 class Tenk : public applesauce::Entity
@@ -81,7 +80,7 @@ public:
         }
         else
         {
-
+            velocity = glm::vec3{0};
             float speed = 6.0f;
             if (applesauce::Input::isPressed(leftKey))
             {
@@ -94,7 +93,7 @@ public:
             if (applesauce::Input::isPressed(forwardKey))
             {
                 glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
-                position += direction * speed * dt;
+                velocity = direction * speed;
             }
         }
         if (applesauce::Input::wasJustPressed(shootKey))
@@ -107,7 +106,7 @@ public:
                 shell->originator = this;
             }
         }
-
+        position += velocity * dt;
         orientation = glm::rotate(orientation, spinSpeed * dt, glm::vec3{0, 1.0f, 0});
     }
 
@@ -118,6 +117,7 @@ public:
     {
         if (e.originator != nullptr)
         {
+            velocity = glm::normalize(e.velocity) * 20.0f;
             spinOutTimer = 1.0f;
         }
     }
