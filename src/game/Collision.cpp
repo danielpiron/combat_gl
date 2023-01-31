@@ -18,6 +18,7 @@ static Quad AABB2Quad(const AABB &aabb)
     return {upperLeft, lowerLeft, lowerRight, upperRight};
 }
 
+// This kind of creates an AABB
 template <class InputIt>
 static std::pair<float, float> projectedExtents(const glm::vec2 &axis, InputIt pointsBegin, InputIt pointsEnd)
 {
@@ -41,6 +42,12 @@ static std::pair<float, float> projectedExtents(const glm::vec2 &axis, const Qua
 static bool rangeOverlaps(float min1, float max1, float min2, float max2)
 {
     return max1 >= min2 && max2 >= min1;
+}
+
+bool checkCollision(const AABB &lhs, const AABB &rhs)
+{
+    return (lhs.min.x <= rhs.max.x && lhs.max.x >= rhs.min.x) &&
+           (lhs.min.y <= rhs.max.y && lhs.max.y >= rhs.min.y);
 }
 
 static bool checkCollision(const AABB &aabb, const Quad &quad, glm::vec2 &normal, float &minOverlap)

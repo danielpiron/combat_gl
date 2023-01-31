@@ -55,3 +55,4 @@ struct TileMap
 };
 
 void prepareTileMap(const char *playField, TileMap &tm);
+bool checkCollision(const AABB &lhs, const AABB &rhs);

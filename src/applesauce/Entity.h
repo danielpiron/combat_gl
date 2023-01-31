@@ -36,6 +36,7 @@ namespace applesauce
         IWorld *world = nullptr;
         bool collidable = false;
         float collisionSize = 0;
+        Entity *originator = nullptr;
 
         virtual void init(ResourceManager &) {}
         virtual void update(float) {}

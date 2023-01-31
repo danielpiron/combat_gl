@@ -33,8 +33,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
-#include <list>
 #include <cmath>
+#include <list>
 #include <memory>
 #include <ostream>
 #include <sstream>
@@ -62,6 +62,13 @@ Quad quadFromEntity(const applesauce::Entity &entity, float size)
             glm::vec2{tfLowerLeft.x, tfLowerLeft.z},
             glm::vec2{tfLowerRight.x, tfLowerRight.z},
             glm::vec2{tfUpperRight.x, tfUpperRight.z}};
+}
+
+AABB aabbFromEntity(const applesauce::Entity &entity)
+{
+    float halfSize = entity.collisionSize / 2.0f;
+    return {{entity.position.x - halfSize, entity.position.z - halfSize},
+            {entity.position.x + halfSize, entity.position.z + halfSize}};
 }
 
 class Triangles : public App,
@@ -278,9 +285,30 @@ public:
                 }
             }
 
+            for (auto i = std::next(entities.begin()); i != entities.end(); i++)
+            {
+                for (auto j = entities.begin(); j != i; j++)
+                {
+                    auto &entA = *i;
+                    auto &entB = *j;
+
+                    // If either entity is the originator of the other, skip
+                    if ((entA->originator != nullptr && entA->originator == entB.get()) || (entB->originator != nullptr && entB->originator == entA.get()))
+                        continue;
+
+                    if (checkCollision(aabbFromEntity(*entA), aabbFromEntity(*entB)))
+                    {
+                        entA->onTouch();
+                        entB->onTouch();
+                    }
+                }
+            }
+
             // Update modelMatrix of all entities in preparation for render
             entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
         }
+
+        // Inefficiently check
     }
 
     void display() override

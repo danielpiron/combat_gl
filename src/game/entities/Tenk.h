@@ -89,6 +89,7 @@ public:
             {
                 glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
                 shell->velocity = direction * 20.0f;
+                shell->originator = this;
             }
         }
 
