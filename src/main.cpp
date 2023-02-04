@@ -313,7 +313,8 @@ public:
             entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
         }
 
-        // Inefficiently check
+        glm::vec3 tenkCenter = tenks[0]->position + (tenks[1]->position - tenks[0]->position) * 0.5f;
+        cameraTarget += (tenkCenter - cameraTarget) * dt;
     }
 
     void display() override
@@ -373,10 +374,8 @@ public:
 
         window.clear({0.01f, 0.01f, 0.01f, 1.0f});
 
-        glm::vec3 tenkCenter = tenks[0]->position + (tenks[1]->position - tenks[0]->position) * 0.5f;
-
         camera.position = glm::mat3(glm::yawPitchRoll(theta, pitch, 0.0f)) * glm::vec3{0, 0, -dist};
-        glm::mat4 view = camera.lookAtMatrix(tenkCenter);
+        glm::mat4 view = camera.lookAtMatrix(cameraTarget);
         glm::mat4 projection = camera.projectionMatrix();
 
         glm::vec3 LightDirection = glm::mat3(view) * lightDir;
@@ -508,6 +507,8 @@ private:
     std::vector<std::shared_ptr<Tenk>> tenks;
 
     Camera camera;
+    glm::vec3 cameraTarget = glm::vec3{0};
+
     float pitch = 0.912121;
     float theta = 3.2649;
     float dist = 21.7568;
