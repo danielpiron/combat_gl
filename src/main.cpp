@@ -233,6 +233,7 @@ public:
                     break;
                 case 'T':
                     auto t = spawn(new Tenk(tankId++), position);
+                    tenks.push_back(std::dynamic_pointer_cast<Tenk>(t));
                     break;
                 }
 
@@ -296,6 +297,10 @@ public:
                     if ((entA->originator != nullptr && entA->originator == entB.get()) || (entB->originator != nullptr && entB->originator == entA.get()))
                         continue;
 
+                    // TODO: Different collision types
+                    // The shell only needs to overlap on the AABB. Nothing more.
+                    // Tank to tank is similar to tank to wall. The tanks should
+                    // stop each other from penetrating.
                     if (checkCollision(aabbFromEntity(*entA), aabbFromEntity(*entB)))
                     {
                         entA->onTouch(*entB);
@@ -368,8 +373,10 @@ public:
 
         window.clear({0.01f, 0.01f, 0.01f, 1.0f});
 
+        glm::vec3 tenkCenter = tenks[0]->position + (tenks[1]->position - tenks[0]->position) * 0.5f;
+
         camera.position = glm::mat3(glm::yawPitchRoll(theta, pitch, 0.0f)) * glm::vec3{0, 0, -dist};
-        glm::mat4 view = camera.lookAtMatrix(glm::vec3{0});
+        glm::mat4 view = camera.lookAtMatrix(tenkCenter);
         glm::mat4 projection = camera.projectionMatrix();
 
         glm::vec3 LightDirection = glm::mat3(view) * lightDir;
@@ -497,6 +504,8 @@ private:
 
     std::unordered_map<std::string, std::shared_ptr<applesauce::Mesh>> meshes;
     std::unordered_map<std::string, std::shared_ptr<applesauce::Texture>> textures;
+
+    std::vector<std::shared_ptr<Tenk>> tenks;
 
     Camera camera;
     float pitch = 0.912121;
