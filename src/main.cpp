@@ -315,6 +315,10 @@ public:
 
         glm::vec3 tenkCenter = tenks[0]->position + (tenks[1]->position - tenks[0]->position) * 0.5f;
         cameraTarget += (tenkCenter - cameraTarget) * dt;
+
+        float tenksDist = glm::distance(tenks[0]->position, tenks[1]->position);
+        float targetDist = (tenksDist - dist) + 4.0f;
+        dist += targetDist * dt;
     }
 
     void display() override
