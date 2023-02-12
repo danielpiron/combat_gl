@@ -286,31 +286,31 @@ public:
                 }
             }
 
-            for (auto i = std::next(entities.begin()); i != entities.end(); i++)
-            {
-                for (auto j = entities.begin(); j != i; j++)
-                {
-                    auto &entA = *i;
-                    auto &entB = *j;
-
-                    // If either entity is the originator of the other, skip
-                    if ((entA->originator != nullptr && entA->originator == entB.get()) || (entB->originator != nullptr && entB->originator == entA.get()))
-                        continue;
-
-                    // TODO: Different collision types
-                    // The shell only needs to overlap on the AABB. Nothing more.
-                    // Tank to tank is similar to tank to wall. The tanks should
-                    // stop each other from penetrating.
-                    if (checkCollision(aabbFromEntity(*entA), aabbFromEntity(*entB)))
-                    {
-                        entA->onTouch(*entB);
-                        entB->onTouch(*entA);
-                    }
-                }
-            }
-
             // Update modelMatrix of all entities in preparation for render
             entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
+        }
+
+        for (auto i = entities.begin(); i != entities.end(); i++)
+        {
+            for (auto j = i; ++j != entities.end();)
+            {
+                auto &entA = *i;
+                auto &entB = *j;
+
+                // If either entity is the originator of the other, skip
+                if ((entA->originator != nullptr && entA->originator == entB.get()) || (entB->originator != nullptr && entB->originator == entA.get()))
+                    continue;
+
+                // TODO: Different collision types
+                // The shell only needs to overlap on the AABB. Nothing more.
+                // Tank to tank is similar to tank to wall. The tanks should
+                // stop each other from penetrating.
+                if (checkCollision(aabbFromEntity(*entA), aabbFromEntity(*entB)))
+                {
+                    entA->onTouch(*entB);
+                    entB->onTouch(*entA);
+                }
+            }
         }
 
         glm::vec3 tenkCenter = tenks[0]->position + (tenks[1]->position - tenks[0]->position) * 0.5f;

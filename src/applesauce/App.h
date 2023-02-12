@@ -62,12 +62,13 @@ private:
             double frameTime = newTime - currentTime;
             currentTime = newTime;
 
-            applesauce::Input::beginFrame();
-            window.pollEvents();
             
             accumulator += frameTime;
 
             while (accumulator >= step) {
+                applesauce::Input::beginFrame();
+                window.pollEvents();
+
                 update(step);
                 accumulator -= step;
                 t += step;
