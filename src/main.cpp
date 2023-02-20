@@ -450,6 +450,7 @@ public:
 
         ImGui::ColorEdit3("tenk", (float *)&getMesh("Tenk")->primitives.front().material->baseColor);
 
+        ImGui::ColorEdit3("floorColor", (float *)&getMesh("Plane")->primitives.front().material->baseColor);
         ImGui::SliderFloat("floorRoughness", (float *)&getMesh("Plane")->primitives.front().material->roughnessFactor, 0, 1.0f);
         ImGui::SliderFloat("floorMetallic", (float *)&getMesh("Plane")->primitives.front().material->metallicFactor, 0, 1.0f);
 
@@ -530,9 +531,9 @@ private:
         glm::vec3 ground;
     };
     Ambient triAmbient{
-        {0.212, 0.227, 0.259},
-        {0.114, 0.125, 0.133},
-        {0.047, 0.043, 0.035},
+        {0.779f, 0.390f, 0.000f},
+        {0.377f, 0.133f, 0.392f},
+        {0.102f, 0.002f, 0.127f},
     };
 
     // Shadow map bits
