@@ -323,10 +323,9 @@ public:
                             {
                                 normal3 = -normal3;
                             }
-                            entA->position -= normal3 * minOverlap;
-                            entB->position += normal3 * minOverlap;
+                            entA->position -= normal3 * minOverlap * 0.5f;
+                            entB->position += normal3 * minOverlap * 0.5f;
                         }
-                        std::cout << "Tenks bumped" << std::endl;
                     }
                     entA->onTouch(*entB);
                     entB->onTouch(*entA);

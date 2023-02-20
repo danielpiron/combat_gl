@@ -52,55 +52,8 @@ bool checkCollision(const AABB &lhs, const AABB &rhs)
 
 static bool checkCollision(const AABB &aabb, const Quad &quad, glm::vec2 &normal, float &minOverlap)
 {
-    // AABB's have two distinct projects, horizonal and veritcal
-    glm::vec2 aabbAxes[] = {
-        {1.0f, 0},
-        {0, 1.0f},
-    };
-
     Quad aabbQuad = AABB2Quad(aabb);
-
-    minOverlap = std::numeric_limits<float>::max();
-    for (size_t i = 0; i < 2; i++)
-    {
-        const auto &axis = aabbAxes[i];
-
-        const auto quadExtents = projectedExtents(axis, quad);
-        const auto aabbExtents = projectedExtents(axis, aabbQuad);
-
-        if (!rangeOverlaps(quadExtents.first, quadExtents.second, aabbExtents.first, aabbExtents.second))
-            return false;
-
-        const auto overlap = std::min(aabbExtents.second - quadExtents.first, quadExtents.second - aabbExtents.first);
-        if (overlap < minOverlap)
-        {
-            minOverlap = overlap;
-            normal = axis;
-        }
-    }
-
-    // Optimization for Oriented-Bound-Box, and not a generalized quad.
-    for (size_t i = 0; i < 4; i++)
-    {
-        const auto p1 = quad.points[i];
-        const auto p2 = quad.points[(i + 1) % 4];
-        const auto edgeVector = p2 - p1;
-        const auto axis = glm::normalize(glm::vec2{edgeVector.y, -edgeVector.x});
-
-        const auto quadExtents = projectedExtents(axis, quad);
-        const auto aabbExtents = projectedExtents(axis, aabbQuad);
-
-        if (!rangeOverlaps(quadExtents.first, quadExtents.second, aabbExtents.first, aabbExtents.second))
-            return false;
-
-        const auto overlap = std::min(aabbExtents.second - quadExtents.first, quadExtents.second - aabbExtents.first);
-        if (overlap < minOverlap)
-        {
-            minOverlap = overlap;
-            normal = axis;
-        }
-    }
-    return true;
+    return checkCollision(aabbQuad, quad, normal, minOverlap);
 }
 
 bool checkCollision(const Quad &lhs, const Quad &rhs, glm::vec2 &normal, float &minOverlap)
@@ -114,16 +67,19 @@ bool checkCollision(const Quad &lhs, const Quad &rhs, glm::vec2 &normal, float &
         for (size_t i = 0; i < 4; i++)
         {
             const auto p1 = quadA->points[i];
-            const auto p2 = quadB->points[(i + 1) % 4];
+            const auto p2 = quadA->points[(i + 1) % 4];
             const auto edgeVector = p2 - p1;
             const auto axis = glm::normalize(glm::vec2{edgeVector.y, -edgeVector.x});
 
-            const auto quadAExtents = projectedExtents(axis, *quadA);
-            const auto quadBExtents = projectedExtents(axis, *quadB);
+            const auto quadAExtents = projectedExtents(axis, lhs);
+            const auto quadBExtents = projectedExtents(axis, rhs);
 
             if (!rangeOverlaps(quadAExtents.first, quadAExtents.second, quadBExtents.first, quadBExtents.second))
+            {
                 return false;
+            }
 
+            //  const auto overlap = std::min(aabbExtents.second - quadExtents.first, quadExtents.second - aabbExtents.first);
             const auto overlap = std::min(quadBExtents.second - quadAExtents.first, quadAExtents.second - quadBExtents.first);
             if (overlap < minOverlap)
             {
