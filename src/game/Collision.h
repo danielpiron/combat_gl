@@ -56,3 +56,4 @@ struct TileMap
 
 void prepareTileMap(const char *playField, TileMap &tm);
 bool checkCollision(const AABB &lhs, const AABB &rhs);
+bool checkCollision(const Quad &lhs, const Quad &rhs, glm::vec2 &normal, float &minOverlap);

@@ -103,6 +103,39 @@ static bool checkCollision(const AABB &aabb, const Quad &quad, glm::vec2 &normal
     return true;
 }
 
+bool checkCollision(const Quad &lhs, const Quad &rhs, glm::vec2 &normal, float &minOverlap)
+{
+    const Quad *quadA = &lhs;
+    const Quad *quadB = &rhs;
+
+    minOverlap = std::numeric_limits<float>::max();
+    for (size_t j = 0; j < 2; ++j)
+    {
+        for (size_t i = 0; i < 4; i++)
+        {
+            const auto p1 = quadA->points[i];
+            const auto p2 = quadB->points[(i + 1) % 4];
+            const auto edgeVector = p2 - p1;
+            const auto axis = glm::normalize(glm::vec2{edgeVector.y, -edgeVector.x});
+
+            const auto quadAExtents = projectedExtents(axis, *quadA);
+            const auto quadBExtents = projectedExtents(axis, *quadB);
+
+            if (!rangeOverlaps(quadAExtents.first, quadAExtents.second, quadBExtents.first, quadBExtents.second))
+                return false;
+
+            const auto overlap = std::min(quadBExtents.second - quadAExtents.first, quadAExtents.second - quadBExtents.first);
+            if (overlap < minOverlap)
+            {
+                minOverlap = overlap;
+                normal = axis;
+            }
+        }
+        std::swap(quadA, quadB);
+    }
+    return true;
+}
+
 bool TileMap::checkCollision(const Quad &boxQuad, glm::vec2 &ejectionVector)
 {
     // Create an AABB from the boxQuad points

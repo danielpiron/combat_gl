@@ -277,6 +277,7 @@ public:
             {
                 glm::vec2 ejectionVector;
                 // TODO: Can we avoid updating this matrix twice?
+                // This is collision vs walls specifically
                 entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
                 if (tm.checkCollision(quadFromEntity(*entity, entity->collisionSize), ejectionVector))
                 {
@@ -307,6 +308,26 @@ public:
                 // stop each other from penetrating.
                 if (checkCollision(aabbFromEntity(*entA), aabbFromEntity(*entB)))
                 {
+                    // Figure out a better way of telling the tanks are bumping (maybe even just have them as a permenant pair)
+                    if (std::dynamic_pointer_cast<Tenk>(entA) && std::dynamic_pointer_cast<Tenk>(entB))
+                    {
+                        Quad quadA = quadFromEntity(*entA, entA->collisionSize);
+                        Quad quadB = quadFromEntity(*entB, entB->collisionSize);
+
+                        float minOverlap = 0;
+                        glm::vec2 normal;
+                        if (checkCollision(quadA, quadB, normal, minOverlap))
+                        {
+                            glm::vec3 normal3{normal.x, 0, normal.y};
+                            if (glm::dot(normal3, glm::normalize(entA->position - entB->position)) > 0)
+                            {
+                                normal3 = -normal3;
+                            }
+                            entA->position -= normal3 * minOverlap;
+                            entB->position += normal3 * minOverlap;
+                        }
+                        std::cout << "Tenks bumped" << std::endl;
+                    }
                     entA->onTouch(*entB);
                     entB->onTouch(*entA);
                 }
