@@ -208,8 +208,8 @@ public:
                                 "*              **              *\n"
                                 "*              **              *\n"
                                 "*              **              *\n"
-                                "*                              *\n"
-                                "*                              *\n"
+                                "*                            ***\n"
+                                "*                            ***\n"
                                 "********************************";
 
         prepareTileMap(playField, tm);
@@ -246,7 +246,7 @@ public:
         for (auto &entity : entities)
         {
             entity->position.x -= static_cast<float>(maxCol) / 2.0f;
-            entity->position.z -= static_cast<float>(row) / 2.0f;
+            entity->position.z = (static_cast<float>(row - 1) - entity->position.z) - static_cast<float>(row) / 2.0f;
         }
 
         meshes.emplace("Plane", std::make_shared<applesauce::Mesh>(makePlaneMesh(maxCol - 1, row - 1, checkerMaterial)));
