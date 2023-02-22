@@ -75,7 +75,7 @@ public:
         float spinSpeed = 0;
         if (spinOutTimer > 0)
         {
-            spinSpeed = 20.0f;
+            spinSpeed = 40.0f * spinOutTimer * spinOutTimer;
             spinOutTimer -= dt;
         }
         else
@@ -108,6 +108,14 @@ public:
         }
         position += velocity * dt;
         orientation = glm::rotate(orientation, spinSpeed * dt, glm::vec3{0, 1.0f, 0});
+    }
+
+    void onTouch() override
+    {
+        if (spinOutTimer > 0)
+        {
+            velocity = glm::vec3{0};
+        }
     }
 
     // TODO: We should probably be receiving a smart pointer to the entity
