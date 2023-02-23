@@ -354,7 +354,7 @@ public:
         glCullFace(GL_FRONT);
 
         static float lightDist = 10.0f;
-        static float lightSize = 16.0f;
+        static float lightSize = 17.0f;
         static float lightNear = 0.1f;
         static float lightFar = 20.0f;
         shadow->use();
