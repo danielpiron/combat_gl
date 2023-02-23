@@ -401,6 +401,7 @@ public:
         camera.position = glm::mat3(glm::yawPitchRoll(theta, pitch, 0.0f)) * glm::vec3{0, 0, -dist};
         glm::mat4 view = camera.lookAtMatrix(cameraTarget);
         glm::mat4 projection = camera.projectionMatrix();
+        camera.fieldOfVision = 45.0f;
 
         glm::vec3 LightDirection = glm::mat3(view) * lightDir;
 
