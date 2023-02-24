@@ -271,6 +271,7 @@ public:
                        entities.end());
         for (auto &entity : entities)
         {
+            entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
             entity->update(dt);
 
             if (entity->collidable)
@@ -278,7 +279,6 @@ public:
                 glm::vec2 ejectionVector;
                 // TODO: Can we avoid updating this matrix twice?
                 // This is collision vs walls specifically
-                entity->modelMatrix = glm::translate(glm::mat4{1.0f}, entity->position) * glm::mat4(entity->orientation);
                 if (tm.checkCollision(quadFromEntity(*entity, entity->collisionSize), ejectionVector))
                 {
                     entity->position.x += ejectionVector.x;

@@ -8,12 +8,23 @@
         {
             "name" : "Scene",
             "nodes" : [
-                0
+                1
             ]
         }
     ],
     "nodes" : [
         {
+            "name" : "BarrelExit",
+            "translation" : [
+                8.881790563464165e-06,
+                0.9173035621643066,
+                -0.6668300032615662
+            ]
+        },
+        {
+            "children" : [
+                0
+            ],
             "mesh" : 0,
             "name" : "Tenk"
         }

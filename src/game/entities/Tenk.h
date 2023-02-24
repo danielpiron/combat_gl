@@ -98,7 +98,10 @@ public:
         }
         if (applesauce::Input::wasJustPressed(shootKey))
         {
-            auto shell = std::dynamic_pointer_cast<Shell>(world->spawn(new Shell, position + glm::vec3{0, 0.75, 0}));
+            glm::vec3 barrelExit{8.881790563464165e-06f, 0.9173035621643066f, -0.6668300032615662f};
+            auto worldBarrelExit = glm::mat3(orientation) * barrelExit + position;
+
+            auto shell = std::dynamic_pointer_cast<Shell>(world->spawn(new Shell, worldBarrelExit));
             if (shell)
             {
                 glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
