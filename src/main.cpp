@@ -283,7 +283,12 @@ public:
                 {
                     entity->position.x += ejectionVector.x;
                     entity->position.z += ejectionVector.y;
-                    entity->onTouch();
+
+                    // TODO: This is not quite right as the ejection vector may be the sum of
+                    // multiple ejections, but it should get us enough information to react
+                    // nicely.
+                    const auto normal = glm::normalize(ejectionVector);
+                    entity->onTouch(glm::vec3(normal.x, 0, normal.y));
                 }
             }
 

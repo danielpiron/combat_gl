@@ -3,40 +3,23 @@
 #include <applesauce/Input.h>
 #include <applesauce/Entity.h>
 
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+#include "glm/gtx/string_cast.hpp"
 
 class Shell : public applesauce::Entity
 {
-    int timer;
-
+public:
     void init(applesauce::ResourceManager &rm) override
     {
         mesh = rm.getMesh("TinyBox");
-        timer = 1000;
         collidable = true;
         collisionSize = 0.25;
     }
     void update(float dt) override
     {
-        if (timer == 0)
-        {
-            destroy();
-        }
         position += velocity * dt;
-
-        // bounce
-        if (position.y < 0.125)
-        {
-            position.y = 0.126;
-            velocity.y *= -0.5f;
-            velocity.x += velocity.x * -0.1f;
-            velocity.z += velocity.z * -0.1f;
-        }
-        timer--;
     }
 
-    void onTouch() override
+    void onTouch(const glm::vec3 &) override
     {
         destroy();
     }
@@ -45,12 +28,35 @@ class Shell : public applesauce::Entity
     {
         destroy();
     }
+};
+
+class RicochetShell : public Shell
+{
+    int bounceCount = 4;
 
 public:
+    void onTouch(const glm::vec3 &normal) override
+    {
+        if (bounceCount <= 0)
+        {
+            // technically, a shell with a bounce count of 0 is a "normal" shell
+            Shell::onTouch(normal);
+        }
+        // "bounce"
+        std::cout << "Old Velocity" << glm::to_string(velocity) << std::endl;
+        velocity = glm::reflect(velocity, normal);
+        std::cout << "New Velocity" << glm::to_string(velocity) << std::endl;
+        // nudge it out a bit.
+        position += velocity * 0.1f;
+        bounceCount--;
+    }
 };
 
 class Tenk : public applesauce::Entity
 {
+
+    float cooldownTimer = 0;
+
 public:
     Tenk(int tenkId)
     {
@@ -96,7 +102,7 @@ public:
                 velocity = direction * speed;
             }
         }
-        if (applesauce::Input::wasJustPressed(shootKey))
+        if (cooldownTimer <= 0 && applesauce::Input::isPressed(shootKey))
         {
             glm::vec3 barrelExit{8.881790563464165e-06f, 0.9173035621643066f, -0.6668300032615662f};
             auto worldBarrelExit = glm::mat3(orientation) * barrelExit + position;
@@ -108,9 +114,20 @@ public:
                 shell->velocity = direction * 20.0f;
                 shell->originator = this;
             }
+            cooldownTimer = 1.5f;
         }
         position += velocity * dt;
         orientation = glm::rotate(orientation, spinSpeed * dt, glm::vec3{0, 1.0f, 0});
+
+        if (cooldownTimer > 0)
+        {
+            cooldownTimer -= dt;
+        }
+    }
+
+    void onTouch(const glm::vec3 &) override
+    {
+        onTouch();
     }
 
     void onTouch() override

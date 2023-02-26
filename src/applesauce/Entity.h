@@ -52,6 +52,7 @@ namespace applesauce
         bool isPendingDestruction = false;
 
         virtual void onTouch() {}
+        virtual void onTouch(const glm::vec3 &) {}
         virtual void onTouch(Entity &) {}
     };
 
