@@ -97,6 +97,8 @@ public:
             {
                 spinSpeed = -4.0f;
             }
+
+            bool backingUp = false;
             if (applesauce::Input::isPressed(forwardKey))
             {
                 glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
@@ -106,21 +108,22 @@ public:
             {
                 glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
                 velocity = direction * speed * -0.5f;
+                backingUp = true;
             }
-        }
-        if (cooldownTimer <= 0 && applesauce::Input::isPressed(shootKey))
-        {
-            glm::vec3 barrelExit{8.881790563464165e-06f, 0.9173035621643066f, -0.6668300032615662f};
-            auto worldBarrelExit = glm::mat3(orientation) * barrelExit + position;
-
-            auto shell = std::dynamic_pointer_cast<Shell>(world->spawn(new Shell, worldBarrelExit));
-            if (shell)
+            if (!backingUp && cooldownTimer <= 0 && applesauce::Input::isPressed(shootKey))
             {
-                glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
-                shell->velocity = direction * 20.0f;
-                shell->originator = this;
+                glm::vec3 barrelExit{8.881790563464165e-06f, 0.9173035621643066f, -0.6668300032615662f};
+                auto worldBarrelExit = glm::mat3(orientation) * barrelExit + position;
+
+                auto shell = std::dynamic_pointer_cast<Shell>(world->spawn(new Shell, worldBarrelExit));
+                if (shell)
+                {
+                    glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
+                    shell->velocity = direction * 20.0f;
+                    shell->originator = this;
+                }
+                cooldownTimer = 1.5f;
             }
-            cooldownTimer = 1.5f;
         }
         position += velocity * dt;
         orientation = glm::rotate(orientation, spinSpeed * dt, glm::vec3{0, 1.0f, 0});
