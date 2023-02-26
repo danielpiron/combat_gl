@@ -65,6 +65,7 @@ public:
             leftKey = GLFW_KEY_LEFT;
             rightKey = GLFW_KEY_RIGHT;
             forwardKey = GLFW_KEY_UP;
+            backupKey = GLFW_KEY_DOWN;
             shootKey = GLFW_KEY_PERIOD;
         }
     }
@@ -100,6 +101,11 @@ public:
             {
                 glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
                 velocity = direction * speed;
+            }
+            else if (applesauce::Input::isPressed(backupKey))
+            {
+                glm::vec3 direction = glm::mat3(orientation) * glm::vec3{0, 0, -1.0f};
+                velocity = direction * speed * -0.5f;
             }
         }
         if (cooldownTimer <= 0 && applesauce::Input::isPressed(shootKey))
@@ -154,6 +160,7 @@ private:
     int leftKey = GLFW_KEY_A;
     int rightKey = GLFW_KEY_D;
     int forwardKey = GLFW_KEY_W;
+    int backupKey = GLFW_KEY_S;
     int shootKey = GLFW_KEY_SPACE;
     float spinOutTimer;
 };
