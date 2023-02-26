@@ -242,6 +242,20 @@ public:
             maxCol = std::max(maxCol, col);
             row++;
         }
+        /*        glm::vec3 baseColor;
+        float metallicFactor;
+        float roughnessFactor;
+        std::shared_ptr<Texture> baseTexture = nullptr;*/
+
+        // Make the second tank "red" (right now need to copy the mesh)
+        tenks[1]->mesh = std::make_shared<applesauce::Mesh>(*(tenks[0]->mesh));
+        tenks[1]->mesh->primitives.front().material = std::make_shared<applesauce::Material>(
+            *(tenks[0]->mesh->primitives.front().material));
+
+        tenks[1]->mesh->primitives.front().material->baseColor = glm::vec3{
+            0.8000000715255737,
+            0.01729123666882515,
+            0.06288419663906097};
 
         for (auto &entity : entities)
         {
